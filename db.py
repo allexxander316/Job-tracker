@@ -3,7 +3,7 @@ import sqlite3
 connection = sqlite3.connect("job_tracker.db")
 
 
-def create_vacancies_table(connection: sqlite3.Connection) -> None:
+def create_vacancies_table() -> None:
     cursor = connection.cursor()
 
     cursor.execute("""
@@ -26,7 +26,7 @@ def create_vacancies_table(connection: sqlite3.Connection) -> None:
     connection.commit()
 
 
-def select_vacancies(connection: sqlite3.Connection) -> list:
+def select_vacancies() -> list:
     cursor = connection.cursor()
     cursor.execute("SELECT * FROM vacancies")
 
@@ -34,7 +34,7 @@ def select_vacancies(connection: sqlite3.Connection) -> list:
     return vacancies
 
 
-def get_by_external_id(connection: sqlite3.Connection, external_id: int) -> dict | None:
+def get_by_external_id(external_id: int) -> dict | None:
     cursor = connection.cursor()
     cursor.execute(
         "SELECT * FROM vacancies WHERE external_id = ?",
@@ -59,7 +59,7 @@ def get_by_external_id(connection: sqlite3.Connection, external_id: int) -> dict
     }
 
 
-def insert_vacancy(connection: sqlite3.Connection, vacancy_data: dict) -> None:
+def insert_vacancy(vacancy_data: dict) -> None:
     cursor = connection.cursor()
     cursor.execute(
         """
@@ -88,7 +88,7 @@ def insert_vacancy(connection: sqlite3.Connection, vacancy_data: dict) -> None:
     connection.commit()
 
 
-def update_vacancy(connection: sqlite3.Connection, vacancy_data: dict) -> None:
+def update_vacancy(vacancy_data: dict) -> None:
     cursor = connection.cursor()
     cursor.execute(
         """
@@ -123,7 +123,7 @@ def update_vacancy(connection: sqlite3.Connection, vacancy_data: dict) -> None:
     connection.commit()
 
 
-def delete_vacancy(connection: sqlite3.Connection, external_id: int) -> None:
+def delete_vacancy(external_id: int) -> None:
     cursor = connection.cursor()
     cursor.execute(
         "DELETE FROM vacancies WHERE external_id = ?",
