@@ -50,7 +50,7 @@ class HHClient:
         pages = result["pages"]
         self._validate_response(result)
 
-        for page in range(1, pages + 1):
+        for page in range(1, pages):
             params["page"] = page
             result = self._search(params)
             vacancies.extend(result["items"])
