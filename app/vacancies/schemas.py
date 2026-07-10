@@ -1,11 +1,13 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.core.enums import Status
 
 
 class VacancySchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     header: str
     description: str
@@ -13,7 +15,7 @@ class VacancySchema(BaseModel):
     external_id: int
     created_at: datetime
     updated_at: datetime
-    status: str = Status.NEW.value
+    status: Status = Status.NEW
     salary_from: int = 0
     salary_to: int = 0
     area: int = 0
