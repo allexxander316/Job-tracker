@@ -22,4 +22,5 @@ def sync_all():
 
         if changed:
             vacancy["updated_at"] = datetime.now()
+            vacancy["status"] = vacancy_from_bd["status"]
             update_vacancy(vacancy)
