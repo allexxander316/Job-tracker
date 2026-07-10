@@ -25,7 +25,7 @@ class HHClient:
         self.text = text
 
     def _search(self, params: dict | None = None) -> dict:
-        response = self._session.get(self.base_url, params=params)
+        response = self._session.get(url=self.base_url, params=params)
         response.raise_for_status()
         return response.json()
 
@@ -36,6 +36,33 @@ class HHClient:
 
         if found_vacancies == 0:
             raise ValueError("Нет записей по запросу")
+
+    def _to_db_format(self, raw: dict) -> dict:
+        salary = raw.get("salary") or {}
+        snippet = raw.get("snippet") or {}
+        description = "\n".join(filter(None, [
+            snippet.get("requirement"),
+            snippet.get("responsibility"),
+        ]))
+
+        db_vacancy = {
+            "header": raw["name"],
+            "description": description,
+            "url": raw["alternate_url"],
+            "external_id": int(raw["id"]),
+            "salary_from": salary.get("from") or 0,
+            "salary_to": salary.get("to") or 0,
+            "area": raw.get("area", {}).get("id") or 0,
+            "experience": raw.get("experience", {}).get("id"),
+            "created_at": raw["created_at"],
+            "updated_at": raw["created_at"],
+            "status": "NEW",
+        }
+
+        return db_vacancy
+
+    def all_vacancies_to_db_format(self, raw_vacancies: list[dict]) -> list[dict]:
+        return [self._to_db_format(raw) for raw in raw_vacancies]
 
     def get_all_vacancies(self) -> list[dict]:
         params = {
@@ -64,4 +91,6 @@ def get_vacancies() -> list[dict]:
         raise ValueError("ACCESS_TOKEN must be provided")
 
     hh_client = HHClient(ACCESS_TOKEN, URL, PROFESSIONAL_ROLE, TEXT)
-    return hh_client.get_all_vacancies()
+    raw_vacancies = hh_client.get_all_vacancies()
+    vacancies = hh_client.all_vacancies_to_db_format(raw_vacancies)
+    return vacancies
