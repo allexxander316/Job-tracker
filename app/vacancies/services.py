@@ -19,6 +19,12 @@ class VacancyService:
         self.session = session
         self.vacancy_repository = VacancyRepository(session)
 
+    async def _get_vacancy_or_404(self, external_id: str) -> VacancyORM:
+        vacancy = await self.vacancy_repository.get_by_external_id(int(external_id))
+        if vacancy is None:
+            raise VacancyNotFoundError(f"Вакансия с id {external_id} не найдена")
+        return vacancy
+
     async def select_vacancies(self) -> list[VacancySchema]:
         vacancies_orm = await self.vacancy_repository.select_vacancies()
         return [VacancySchema.model_validate(vacancy) for vacancy in vacancies_orm]
@@ -28,24 +34,18 @@ class VacancyService:
         await self.session.commit()
 
     async def update_vacancy(self, external_id: str, vacancy_update: VacancyUpdateSchema) -> None:
-        vacancy = await self.vacancy_repository.get_by_external_id(int(external_id))
-        if vacancy is None:
-            raise VacancyNotFoundError(f"Вакансия с id {external_id} не найдена")
+        vacancy = await self._get_vacancy_or_404(external_id)
         update_dict = vacancy_update.model_dump(exclude_unset=True)
         self.vacancy_repository.update_vacancy(vacancy, update_dict)
         await self.session.commit()
 
     async def get_by_external_id(self, external_id: str) -> VacancySchema:
-        vacancy = await self.vacancy_repository.get_by_external_id(int(external_id))
-        if vacancy is None:
-            raise VacancyNotFoundError(f"Вакансия с id {external_id} не найдена")
+        vacancy = await self._get_vacancy_or_404(external_id)
         return VacancySchema.model_validate(vacancy)
 
     async def delete_by_external_id(self, external_id: str) -> None:
-        vacancy_for_delete = await self.vacancy_repository.get_by_external_id(int(external_id))
-        if vacancy_for_delete is None:
-            raise VacancyNotFoundError(f"Вакансия с id {external_id} не найдена")
-        await self.vacancy_repository.delete_vacancy(vacancy_for_delete)
+        vacancy = await self._get_vacancy_or_404(external_id)
+        await self.vacancy_repository.delete_vacancy(vacancy)
         await self.session.commit()
 
 
