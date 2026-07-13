@@ -20,6 +20,9 @@ class VacancySchema(BaseModel):
     salary_to: int = 0
     area: int = 0
     experience: int | None = None
+    city: str | None = None
+    work_format: str | None = None
+    employer_name: str | None = None
 
 
 class ChangeStatusSchema(BaseModel):

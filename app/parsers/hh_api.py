@@ -1,4 +1,5 @@
 import asyncio
+import re
 
 import httpx
 
@@ -39,10 +40,20 @@ class HHApiParser(AbstractParser):
     def _to_db_format(self, raw: dict) -> dict:
         salary = raw.get("salary") or {}
         snippet = raw.get("snippet") or {}
-        description = "\n".join(filter(None, [
-            snippet.get("requirement"),
-            snippet.get("responsibility"),
-        ]))
+
+        requirement = snippet.get("requirement") or ""
+        responsibility = snippet.get("responsibility") or ""
+
+        clean_req = re.sub(r"</?highlighttext>", "", requirement)
+        clean_resp = re.sub(r"</?highlighttext>", "", responsibility)
+
+        description = "\n".join(filter(None, [clean_req, clean_resp]))
+        address = raw.get("address") or {}
+        area = raw.get("area") or {}
+        city = address.get("city") or area.get("name") or "Не указан"
+        work_formats_list = [f.get("name") for f in raw.get("work_format", []) if f.get("name")]
+        work_format_str = ", ".join(work_formats_list) if work_formats_list else "Не указан"
+        employer_name = raw.get("employer", {}).get("name") or "Не указано"
 
         db_vacancy = {
             "header": raw["name"],
@@ -51,11 +62,16 @@ class HHApiParser(AbstractParser):
             "external_id": int(raw["id"]),
             "salary_from": salary.get("from") or 0,
             "salary_to": salary.get("to") or 0,
-            "area": raw.get("area", {}).get("id") or 0,
+            "area": int(area.get("id")) if area.get("id") and area.get("id").isdigit() else 0,
             "experience": raw.get("experience", {}).get("id"),
             "created_at": raw["created_at"],
             "updated_at": raw["created_at"],
             "status": "NEW",
+
+            # Новые поля, которые ожидает ваша VacancySchema
+            "city": city,
+            "work_format": work_format_str,
+            "employer_name": employer_name,
         }
 
         return db_vacancy

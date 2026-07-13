@@ -21,3 +21,6 @@ class VacancyORM(Base):
     salary_to: Mapped[int] = mapped_column(default=0)
     area: Mapped[int] = mapped_column(default=0)
     experience: Mapped[int | None]
+    city: Mapped[str | None]
+    employer_name: Mapped[str | None]
+    work_format: Mapped[str] = mapped_column(default="Не указан")
