@@ -12,11 +12,7 @@ class VacancyRepository:
         return list(result.all())
 
     async def get_by_external_id(self, external_id: int) -> VacancyORM | None:
-        stmt = (
-            select(VacancyORM)
-            .where(VacancyORM.external_id == external_id)
-        )
-
+        stmt = (select(VacancyORM).where(VacancyORM.external_id == external_id))
         vacancy = await self.async_session.execute(stmt)
         return vacancy.scalar_one_or_none()
 
@@ -33,9 +29,6 @@ class VacancyRepository:
         for key, value in vacancy_data.items():
             setattr(vacancy, key, value)
 
-    async def delete_vacancy(self, external_id: int) -> VacancyORM | None:
-        vacancy = await self.get_by_external_id(external_id)
-        if vacancy is None:
-            return None
+    async def delete_vacancy(self, vacancy: VacancyORM) -> VacancyORM | None:
         await self.async_session.delete(vacancy)
         return vacancy
