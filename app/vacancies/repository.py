@@ -1,4 +1,4 @@
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.vacancies.models import VacancyORM
@@ -30,13 +30,6 @@ class VacancyRepository:
         self.async_session.add(VacancyORM(**vacancy_data))
 
     def update_vacancy(self, vacancy: VacancyORM, vacancy_data: dict) -> None:
-        for key, value in vacancy_data.items():
-            setattr(vacancy, key, value)
-
-    async def update_vacancy_by_external_id(self, vacancy_data: dict) -> None:
-        vacancy = await self.get_by_external_id(vacancy_data["external_id"])
-        if vacancy is None:
-            return
         for key, value in vacancy_data.items():
             setattr(vacancy, key, value)
 
