@@ -27,7 +27,7 @@ class VacancyService:
         self.vacancy_repository.add_vacancy(vacancy_data)
         await self.session.commit()
 
-    async def get_by_external_id(self, external_id: str) -> VacancySchema | None:
+    async def get_by_external_id(self, external_id: str) -> VacancySchema:
         vacancy = await self.vacancy_repository.get_by_external_id(int(external_id))
         if vacancy is None:
             raise VacancyNotFoundError(f"Вакансия с id {external_id} не найдена")
