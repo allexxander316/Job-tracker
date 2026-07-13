@@ -2,13 +2,15 @@ from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .models import VacancyORM
-from .repository import VacancyRepository
+from app.vacancies.models import VacancyORM
+from app.vacancies.repository import VacancyRepository
 from app.parsers.hh_api import get_vacancies
 from app.vacancies.schemas import VacancySchema
 
 
 class VacancyService:
+    """CRUD для вакансий"""
+
     def __init__(self, session: AsyncSession):
         self.session = session
         self.vacancy_repository = VacancyRepository(session)
@@ -16,9 +18,6 @@ class VacancyService:
     async def select_vacancies(self) -> list[VacancySchema]:
         vacancies_orm = await self.vacancy_repository.select_vacancies()
         return [VacancySchema.model_validate(vacancy) for vacancy in vacancies_orm]
-
-    def insert_vacancy_without_saving(self, vacancy_data: dict) -> None:
-        self.vacancy_repository.add_vacancy(vacancy_data)
 
     async def insert_vacancy(self, vacancy_data: dict) -> None:
         self.vacancy_repository.add_vacancy(vacancy_data)
@@ -30,12 +29,23 @@ class VacancyService:
             return None
         return VacancySchema.model_validate(vacancy_orm)
 
-    def update_vacancy_without_saving(self, vacancy: VacancyORM, vacancy_data: dict) -> None:
-       self.vacancy_repository.update_vacancy(vacancy, vacancy_data)
-
     async def delete_by_external_id(self, external_id: str) -> None:
         await self.vacancy_repository.delete_vacancy(int(external_id))
         await self.session.commit()
+
+
+class VacancySyncService:
+    """Синхронизация вакансий в бд с HH вакансиями"""
+
+    def __init__(self, session: AsyncSession):
+        self.session = session
+        self.vacancy_repository = VacancyRepository(session)
+
+    def insert_vacancy_without_saving(self, vacancy_data: dict) -> None:
+        self.vacancy_repository.add_vacancy(vacancy_data)
+
+    def update_vacancy_without_saving(self, vacancy: VacancyORM, vacancy_data: dict) -> None:
+       self.vacancy_repository.update_vacancy(vacancy, vacancy_data)
 
     async def sync_all(self):
         hh_vacancies = await get_vacancies()
