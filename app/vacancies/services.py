@@ -48,38 +48,37 @@ class VacancySyncService:
         self.session = session
         self.vacancy_repository = VacancyRepository(session)
 
-    def insert_vacancy_without_saving(self, vacancy_data: dict) -> None:
-        self.vacancy_repository.add_vacancy(vacancy_data)
+    @staticmethod
+    def _vacancy_has_changed(vacancy_from_hh: dict, vacancy_from_db) -> bool:
+        """Проверяет, изменились ли значимые поля вакансии"""
 
-    def update_vacancy_without_saving(self, vacancy: VacancyORM, vacancy_data: dict) -> None:
-       self.vacancy_repository.update_vacancy(vacancy, vacancy_data)
-
-    async def sync_all(self):
-        hh_vacancies = await get_vacancies()
-        existing = await self.vacancy_repository.get_all_by_external_ids(
-            [v["external_id"] for v in hh_vacancies]
+        comparable = {"header", "description", "url", "salary_from", "salary_to", "area", "experience"}
+        return any(
+            vacancy_from_hh.get(field) != getattr(vacancy_from_db, field, None)
+            for field in comparable
         )
+
+    async def sync_all(self) -> None:
+        """Синхронизирует данные с hh.ru с данными в бд"""
+
+        hh_vacancies = await get_vacancies()
+        existing_ids = [v["external_id"] for v in hh_vacancies]
+        existing = await self.vacancy_repository.get_all_by_external_ids(existing_ids)
         existing_map = {v.external_id: v for v in existing}
         for vacancy in hh_vacancies:
             vacancy_from_db = existing_map.get(vacancy["external_id"])
+
             if vacancy_from_db is None:
-                self.insert_vacancy_without_saving(vacancy)
+                self.vacancy_repository.add_vacancy(vacancy)
                 continue
 
-            comparable = {"header", "description", "url", "salary_from", "salary_to", "area", "experience"}
-
-            changed = any(
-                vacancy.get(field) != getattr(vacancy_from_db, field, None)
-                for field in comparable
-            )
-
-            if changed:
+            if self._vacancy_has_changed(vacancy, vacancy_from_db):
                 vacancy_to_db = {
                     **vacancy,
                     "updated_at": datetime.now(),
                     "status": vacancy_from_db.status
                 }
 
-                self.update_vacancy_without_saving(vacancy_from_db, vacancy_to_db)
+                self.vacancy_repository.update_vacancy(vacancy_from_db, vacancy_to_db)
 
         await self.session.commit()
