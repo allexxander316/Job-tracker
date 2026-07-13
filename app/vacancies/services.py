@@ -8,6 +8,10 @@ from app.parsers.hh_api import get_vacancies
 from app.vacancies.schemas import VacancySchema
 
 
+class VacancyNotFoundError(Exception):
+    """Вакансия не найдена в бд"""
+
+
 class VacancyService:
     """CRUD для вакансий"""
 
@@ -24,13 +28,16 @@ class VacancyService:
         await self.session.commit()
 
     async def get_by_external_id(self, external_id: str) -> VacancySchema | None:
-        vacancy_orm = await self.vacancy_repository.get_by_external_id(int(external_id))
-        if vacancy_orm is None:
-            return None
-        return VacancySchema.model_validate(vacancy_orm)
+        vacancy = await self.vacancy_repository.get_by_external_id(int(external_id))
+        if vacancy is None:
+            raise VacancyNotFoundError(f"Вакансия с id {external_id} не найдена")
+        return VacancySchema.model_validate(vacancy)
 
     async def delete_by_external_id(self, external_id: str) -> None:
-        await self.vacancy_repository.delete_vacancy(int(external_id))
+        vacancy_for_delete = await self.vacancy_repository.get_by_external_id(int(external_id))
+        if vacancy_for_delete is None:
+            raise VacancyNotFoundError(f"Вакансия с id {external_id} не найдена")
+        await self.vacancy_repository.delete_vacancy(vacancy_for_delete)
         await self.session.commit()
 
 
