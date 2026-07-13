@@ -1,7 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, status
 
 from app.vacancies.dependencies import VacancyServiceDep
 from app.vacancies.schemas import VacancySchema
+from app.vacancies.services import VacancyNotFoundError
 
 router = APIRouter(
     prefix="/vacancies",
@@ -16,4 +17,7 @@ async def read_vacancies(vacancy_service: VacancyServiceDep) -> list[VacancySche
 
 @router.get("/vacancy_id")
 async def read_tasks(vacancy_id: str, vacancy_service: VacancyServiceDep) -> VacancySchema:
-    return await vacancy_service.get_by_external_id(vacancy_id)
+    try:
+        return await vacancy_service.get_by_external_id(vacancy_id)
+    except VacancyNotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
