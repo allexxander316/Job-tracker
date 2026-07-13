@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.vacancies.models import VacancyORM
 from app.vacancies.repository import VacancyRepository
 from app.parsers.hh_api import get_vacancies
-from app.vacancies.schemas import VacancySchema
+from app.vacancies.schemas import VacancySchema, VacancyUpdateSchema
 
 
 class VacancyNotFoundError(Exception):
@@ -25,6 +25,14 @@ class VacancyService:
 
     async def insert_vacancy(self, vacancy_data: dict) -> None:
         self.vacancy_repository.add_vacancy(vacancy_data)
+        await self.session.commit()
+
+    async def update_vacancy(self, external_id: str, vacancy_update: VacancyUpdateSchema) -> None:
+        vacancy = await self.vacancy_repository.get_by_external_id(int(external_id))
+        if vacancy is None:
+            raise VacancyNotFoundError(f"Вакансия с id {external_id} не найдена")
+        update_dict = vacancy_update.model_dump(exclude_unset=True)
+        self.vacancy_repository.update_vacancy(vacancy, update_dict)
         await self.session.commit()
 
     async def get_by_external_id(self, external_id: str) -> VacancySchema:
