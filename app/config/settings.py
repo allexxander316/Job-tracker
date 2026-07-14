@@ -4,7 +4,6 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parents[2]
-DB_PATH = BASE_DIR / "job_tracker.db"
 ENV_PATH = BASE_DIR / ".env"
 
 
