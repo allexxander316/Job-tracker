@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.vacancies.models import VacancyORM
 from app.vacancies.repository import VacancyRepository
 from app.parsers.hh_api import get_vacancies
-from app.vacancies.schemas import VacancySchema, VacancyUpdateSchema
+from app.vacancies.schemas import VacancySchema, VacancyUpdateSchema, ChangeStatusSchema
 
 
 class VacancyNotFoundError(Exception):
@@ -25,6 +25,13 @@ class VacancyService:
             raise VacancyNotFoundError(f"Вакансия с id {external_id} не найдена")
         return vacancy
 
+    async def _update_fields(self, external_id: str, data: VacancyUpdateSchema | ChangeStatusSchema) -> VacancySchema:
+        vacancy = await self._get_vacancy_or_404(external_id)
+        update_dict = data.model_dump(exclude_unset=True)
+        self.vacancy_repository.update_vacancy(vacancy, update_dict)
+        await self.session.commit()
+        return VacancySchema.model_validate(vacancy)
+
     async def select_vacancies(self) -> list[VacancySchema]:
         vacancies_orm = await self.vacancy_repository.select_vacancies()
         return [VacancySchema.model_validate(vacancy) for vacancy in vacancies_orm]
@@ -33,11 +40,11 @@ class VacancyService:
         self.vacancy_repository.add_vacancy(vacancy_data)
         await self.session.commit()
 
-    async def update_vacancy(self, external_id: str, vacancy_update: VacancyUpdateSchema) -> None:
-        vacancy = await self._get_vacancy_or_404(external_id)
-        update_dict = vacancy_update.model_dump(exclude_unset=True)
-        self.vacancy_repository.update_vacancy(vacancy, update_dict)
-        await self.session.commit()
+    async def update_vacancy(self, external_id: str, vacancy_update: VacancyUpdateSchema) -> VacancySchema:
+        return await self._update_fields(external_id, vacancy_update)
+
+    async def change_status(self, external_id: str, vacancy_status: ChangeStatusSchema) -> VacancySchema:
+        return await self._update_fields(external_id, vacancy_status)
 
     async def get_by_external_id(self, external_id: str) -> VacancySchema:
         vacancy = await self._get_vacancy_or_404(external_id)
