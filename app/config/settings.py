@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     hh_professional_role: int = 96
     hh_search_text: str = "python"
     database_url: str = Field(alias="DATABASE_URL")
+    log_level: str = "INFO"
 
 
 settings = Settings()

@@ -3,8 +3,11 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI
 
+from app.core.logger import setup_logging
 from app.scheduler.tasks import setup_scheduler
 from app.vacancies.routers import router as vacancies_router
+
+setup_logging()
 
 
 @asynccontextmanager
