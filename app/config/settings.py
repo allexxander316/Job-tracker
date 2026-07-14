@@ -8,7 +8,6 @@ DB_PATH = BASE_DIR / "job_tracker.db"
 ENV_PATH = BASE_DIR / ".env"
 
 
-
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=ENV_PATH)
 
@@ -16,7 +15,7 @@ class Settings(BaseSettings):
     hh_base_url: str = "https://api.hh.ru/vacancies"
     hh_professional_role: int = 96
     hh_search_text: str = "python"
-    database_url: str = f"sqlite+aiosqlite:///{DB_PATH}"
+    database_url: str = Field(alias="DATABASE_URL")
 
 
 settings = Settings()
