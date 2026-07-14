@@ -16,3 +16,9 @@ dependencies = [
     "requests>=2.34.2",
     "sqlalchemy>=2.0.51",
 ]
+
+[dependency-groups]
+dev = [
+    "detect-secrets>=1.5.0",
+    "pre-commit>=4.6.0",
+]
