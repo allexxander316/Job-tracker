@@ -17,7 +17,7 @@ async def read_vacancies(vacancy_service: VacancyServiceDep) -> list[VacancySche
 
 @router.get("/{vacancy_id}")
 async def read_vacancy(
-    vacancy_id: str, vacancy_service: VacancyServiceDep
+    vacancy_id: int, vacancy_service: VacancyServiceDep
 ) -> VacancySchema:
     try:
         return await vacancy_service.get_by_external_id(vacancy_id)
@@ -27,7 +27,7 @@ async def read_vacancy(
 
 @router.patch("/{vacancy_id}/status")
 async def change_status(
-    vacancy_id: str, payload: ChangeStatusSchema, vacancy_service: VacancyServiceDep
+    vacancy_id: int, payload: ChangeStatusSchema, vacancy_service: VacancyServiceDep
 ) -> VacancySchema:
     try:
         return await vacancy_service.change_status(vacancy_id, payload)

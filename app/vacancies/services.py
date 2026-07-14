@@ -19,14 +19,14 @@ class VacancyService:
         self.session = session
         self.vacancy_repository = VacancyRepository(session)
 
-    async def _get_vacancy_or_404(self, external_id: str) -> VacancyORM:
-        vacancy = await self.vacancy_repository.get_by_external_id(int(external_id))
+    async def _get_vacancy_or_404(self, external_id: int) -> VacancyORM:
+        vacancy = await self.vacancy_repository.get_by_external_id(external_id)
         if vacancy is None:
             raise VacancyNotFoundError(f"Вакансия с id {external_id} не найдена")
         return vacancy
 
     async def _update_fields(
-        self, external_id: str, data: VacancyUpdateSchema | ChangeStatusSchema
+        self, external_id: int, data: VacancyUpdateSchema | ChangeStatusSchema
     ) -> VacancySchema:
         vacancy = await self._get_vacancy_or_404(external_id)
         update_dict = data.model_dump(exclude_unset=True)
@@ -43,20 +43,20 @@ class VacancyService:
         await self.session.commit()
 
     async def update_vacancy(
-        self, external_id: str, vacancy_update: VacancyUpdateSchema
+        self, external_id: int, vacancy_update: VacancyUpdateSchema
     ) -> VacancySchema:
         return await self._update_fields(external_id, vacancy_update)
 
     async def change_status(
-        self, external_id: str, vacancy_status: ChangeStatusSchema
+        self, external_id: int, vacancy_status: ChangeStatusSchema
     ) -> VacancySchema:
         return await self._update_fields(external_id, vacancy_status)
 
-    async def get_by_external_id(self, external_id: str) -> VacancySchema:
+    async def get_by_external_id(self, external_id: int) -> VacancySchema:
         vacancy = await self._get_vacancy_or_404(external_id)
         return VacancySchema.model_validate(vacancy)
 
-    async def delete_by_external_id(self, external_id: str) -> None:
+    async def delete_by_external_id(self, external_id: int) -> None:
         vacancy = await self._get_vacancy_or_404(external_id)
         await self.vacancy_repository.delete_vacancy(vacancy)
         await self.session.commit()
