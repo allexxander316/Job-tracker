@@ -8,12 +8,15 @@ from app.parsers.base import AbstractParser
 
 
 class HHApiParser(AbstractParser):
-    def __init__(self, access_token: str, base_url: str,
-                 professional_role: int, text: str):
-        self._async_client = httpx.AsyncClient(headers={
-            "HH-User-Agent": "MyApp/1.1 (allexxander316@gmail.com)",
-            "Authorization": f"Bearer {access_token}",
-        })
+    def __init__(
+        self, access_token: str, base_url: str, professional_role: int, text: str
+    ):
+        self._async_client = httpx.AsyncClient(
+            headers={
+                "HH-User-Agent": "MyApp/1.1 (allexxander316@gmail.com)",
+                "Authorization": f"Bearer {access_token}",
+            }
+        )
         self.base_url = base_url
         self.professional_role = professional_role
         self.text = text
@@ -32,7 +35,9 @@ class HHApiParser(AbstractParser):
     def _validate_response(self, response: dict) -> None:
         found_vacancies = response["found"]
         if found_vacancies > 2000:
-            raise ValueError("Не все записи могут быть получены, сделайте более строгий поиск")
+            raise ValueError(
+                "Не все записи могут быть получены, сделайте более строгий поиск"
+            )
 
         if found_vacancies == 0:
             raise ValueError("Нет записей по запросу")
@@ -51,8 +56,12 @@ class HHApiParser(AbstractParser):
         address = raw.get("address") or {}
         area = raw.get("area") or {}
         city = address.get("city") or area.get("name") or "Не указан"
-        work_formats_list = [f.get("name") for f in raw.get("work_format", []) if f.get("name")]
-        work_format_str = ", ".join(work_formats_list) if work_formats_list else "Не указан"
+        work_formats_list = [
+            f.get("name") for f in raw.get("work_format", []) if f.get("name")
+        ]
+        work_format_str = (
+            ", ".join(work_formats_list) if work_formats_list else "Не указан"
+        )
         employer_name = raw.get("employer", {}).get("name") or "Не указано"
 
         db_vacancy = {
@@ -62,12 +71,13 @@ class HHApiParser(AbstractParser):
             "external_id": int(raw["id"]),
             "salary_from": salary.get("from") or 0,
             "salary_to": salary.get("to") or 0,
-            "area": int(area.get("id")) if area.get("id") and area.get("id").isdigit() else 0,
+            "area": int(area.get("id"))
+            if area.get("id") and area.get("id").isdigit()
+            else 0,
             "experience": raw.get("experience", {}).get("id"),
             "created_at": raw["created_at"],
             "updated_at": raw["created_at"],
             "status": "NEW",
-
             # Новые поля, которые ожидает ваша VacancySchema
             "city": city,
             "work_format": work_format_str,
@@ -106,10 +116,10 @@ async def get_vacancies() -> list[dict]:
         raise ValueError("ACCESS_TOKEN must be provided")
 
     async with HHApiParser(
-            settings.hh_access_token,
-            settings.hh_base_url,
-            settings.hh_professional_role,
-            settings.hh_search_text,
+        settings.hh_access_token,
+        settings.hh_base_url,
+        settings.hh_professional_role,
+        settings.hh_search_text,
     ) as hh_api_parser:
         raw_vacancies = await hh_api_parser.get_all_vacancies()
         vacancies = hh_api_parser.all_vacancies_to_db_format(raw_vacancies)

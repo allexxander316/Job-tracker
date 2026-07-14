@@ -13,13 +13,16 @@ TEXT = "python"
 
 
 class HHClient:
-    def __init__(self, access_token: str, base_url: str,
-                 professional_role: int, text: str):
+    def __init__(
+        self, access_token: str, base_url: str, professional_role: int, text: str
+    ):
         self._session = requests.Session()
-        self._session.headers.update({
-            "HH-User-Agent": "MyApp/1.1 (allexxander316@gmail.com)",
-            "Authorization": f"Bearer {access_token}",
-        })
+        self._session.headers.update(
+            {
+                "HH-User-Agent": "MyApp/1.1 (allexxander316@gmail.com)",
+                "Authorization": f"Bearer {access_token}",
+            }
+        )
         self.base_url = base_url
         self.professional_role = professional_role
         self.text = text
@@ -32,7 +35,9 @@ class HHClient:
     def _validate_response(self, response: dict) -> None:
         found_vacancies = response["found"]
         if found_vacancies > 2000:
-            raise ValueError("Не все записи могут быть получены, сделайте более строгий поиск")
+            raise ValueError(
+                "Не все записи могут быть получены, сделайте более строгий поиск"
+            )
 
         if found_vacancies == 0:
             raise ValueError("Нет записей по запросу")
@@ -40,10 +45,15 @@ class HHClient:
     def _to_db_format(self, raw: dict) -> dict:
         salary = raw.get("salary") or {}
         snippet = raw.get("snippet") or {}
-        description = "\n".join(filter(None, [
-            snippet.get("requirement"),
-            snippet.get("responsibility"),
-        ]))
+        description = "\n".join(
+            filter(
+                None,
+                [
+                    snippet.get("requirement"),
+                    snippet.get("responsibility"),
+                ],
+            )
+        )
 
         db_vacancy = {
             "header": raw["name"],

@@ -11,6 +11,7 @@ async def synchronize_vacancies_job() -> None:
         service = VacancySyncService(session)
         await service.sync_all()
 
+
 def setup_scheduler() -> AsyncIOScheduler:
     """Создает и настраивает планировщик."""
     scheduler = AsyncIOScheduler()

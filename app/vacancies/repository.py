@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.vacancies.models import VacancyORM
 
+
 class VacancyRepository:
     def __init__(self, async_session: AsyncSession) -> None:
         self.async_session = async_session
@@ -12,11 +13,13 @@ class VacancyRepository:
         return list(result.all())
 
     async def get_by_external_id(self, external_id: int) -> VacancyORM | None:
-        stmt = (select(VacancyORM).where(VacancyORM.external_id == external_id))
+        stmt = select(VacancyORM).where(VacancyORM.external_id == external_id)
         vacancy = await self.async_session.execute(stmt)
         return vacancy.scalar_one_or_none()
 
-    async def get_all_by_external_ids(self, external_ids: list[int]) -> list[VacancyORM]:
+    async def get_all_by_external_ids(
+        self, external_ids: list[int]
+    ) -> list[VacancyORM]:
         stmt = select(VacancyORM).where(VacancyORM.external_id.in_(external_ids))
         result = await self.async_session.execute(stmt)
         return list(result.scalars().all())

@@ -9,8 +9,10 @@ from app.vacancies.services import VacancyService
 
 DbSession = Annotated[AsyncSession, Depends(get_db)]
 
+
 def get_vacancy_service(db: DbSession) -> VacancyService:
     """Функция для инъекции зависимости VacancyService"""
     return VacancyService(db)
+
 
 VacancyServiceDep = Annotated[VacancyService, Depends(get_vacancy_service)]

@@ -13,11 +13,18 @@ def sync_all():
             insert_vacancy(vacancy)
             continue
 
-        comparable = {"header", "description", "url", "salary_from", "salary_to", "area", "experience"}
+        comparable = {
+            "header",
+            "description",
+            "url",
+            "salary_from",
+            "salary_to",
+            "area",
+            "experience",
+        }
 
         changed = any(
-            vacancy.get(field) != vacancy_from_bd.get(field)
-            for field in comparable
+            vacancy.get(field) != vacancy_from_bd.get(field) for field in comparable
         )
 
         if changed:

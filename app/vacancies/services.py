@@ -25,7 +25,9 @@ class VacancyService:
             raise VacancyNotFoundError(f"Вакансия с id {external_id} не найдена")
         return vacancy
 
-    async def _update_fields(self, external_id: str, data: VacancyUpdateSchema | ChangeStatusSchema) -> VacancySchema:
+    async def _update_fields(
+        self, external_id: str, data: VacancyUpdateSchema | ChangeStatusSchema
+    ) -> VacancySchema:
         vacancy = await self._get_vacancy_or_404(external_id)
         update_dict = data.model_dump(exclude_unset=True)
         self.vacancy_repository.update_vacancy(vacancy, update_dict)
@@ -40,10 +42,14 @@ class VacancyService:
         self.vacancy_repository.add_vacancy(vacancy_data)
         await self.session.commit()
 
-    async def update_vacancy(self, external_id: str, vacancy_update: VacancyUpdateSchema) -> VacancySchema:
+    async def update_vacancy(
+        self, external_id: str, vacancy_update: VacancyUpdateSchema
+    ) -> VacancySchema:
         return await self._update_fields(external_id, vacancy_update)
 
-    async def change_status(self, external_id: str, vacancy_status: ChangeStatusSchema) -> VacancySchema:
+    async def change_status(
+        self, external_id: str, vacancy_status: ChangeStatusSchema
+    ) -> VacancySchema:
         return await self._update_fields(external_id, vacancy_status)
 
     async def get_by_external_id(self, external_id: str) -> VacancySchema:
@@ -67,7 +73,15 @@ class VacancySyncService:
     def _vacancy_has_changed(vacancy_from_hh: dict, vacancy_from_db) -> bool:
         """Проверяет, изменились ли значимые поля вакансии"""
 
-        comparable = {"header", "description", "url", "salary_from", "salary_to", "area", "experience"}
+        comparable = {
+            "header",
+            "description",
+            "url",
+            "salary_from",
+            "salary_to",
+            "area",
+            "experience",
+        }
         return any(
             vacancy_from_hh.get(field) != getattr(vacancy_from_db, field, None)
             for field in comparable
@@ -91,7 +105,7 @@ class VacancySyncService:
                 vacancy_to_db = {
                     **vacancy,
                     "updated_at": datetime.now(),
-                    "status": vacancy_from_db.status
+                    "status": vacancy_from_db.status,
                 }
 
                 self.vacancy_repository.update_vacancy(vacancy_from_db, vacancy_to_db)
