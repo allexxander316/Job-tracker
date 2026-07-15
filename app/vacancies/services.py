@@ -2,10 +2,13 @@ from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.logger import get_logger
 from app.vacancies.models import VacancyORM
 from app.vacancies.repository import VacancyRepository
 from app.parsers.hh_api import get_vacancies
 from app.vacancies.schemas import VacancySchema, VacancyUpdateSchema, ChangeStatusSchema
+
+logger = get_logger(__name__)
 
 
 class VacancyNotFoundError(Exception):
@@ -91,14 +94,22 @@ class VacancySyncService:
         """Синхронизирует данные с hh.ru с данными в бд"""
 
         hh_vacancies = await get_vacancies()
+        logger.info("Syncing %s vacancies", len(hh_vacancies))
+
         existing_ids = [v["external_id"] for v in hh_vacancies]
         existing = await self.vacancy_repository.get_all_by_external_ids(existing_ids)
         existing_map = {v.external_id: v for v in existing}
+
+        created = 0
+        updated = 0
+        skipped = 0
+
         for vacancy in hh_vacancies:
             vacancy_from_db = existing_map.get(vacancy["external_id"])
 
             if vacancy_from_db is None:
                 self.vacancy_repository.add_vacancy(vacancy)
+                created += 1
                 continue
 
             if self._vacancy_has_changed(vacancy, vacancy_from_db):
@@ -109,5 +120,11 @@ class VacancySyncService:
                 }
 
                 self.vacancy_repository.update_vacancy(vacancy_from_db, vacancy_to_db)
+                updated += 1
+            else:
+                skipped += 1
 
         await self.session.commit()
+        logger.info(
+            "Sync done: created=%s, updated=%s, skipped=%s", created, updated, skipped
+        )
