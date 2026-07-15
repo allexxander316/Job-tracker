@@ -4,7 +4,11 @@ import re
 import httpx
 
 from app.config.settings import settings
+from app.core.logger import get_logger
 from app.parsers.base import AbstractParser
+
+
+logger = get_logger(__name__)
 
 
 class HHApiParser(AbstractParser):
@@ -29,6 +33,8 @@ class HHApiParser(AbstractParser):
 
     async def _search(self, params: dict | None = None) -> dict:
         response = await self._async_client.get(url=self.base_url, params=params)
+        if response.is_error:
+            logger.warning("HTTP %s: %s", response.status_code, response.text[:200])
         response.raise_for_status()
         return response.json()
 
@@ -97,17 +103,26 @@ class HHApiParser(AbstractParser):
             "page": 0,
         }
 
+        logger.info(
+            "Starting fetch: role=%s text='%s'",
+            self.professional_role,
+            self.text,
+        )
+
         result = await self._search(params)
         self._validate_response(result)
         vacancies = result["items"]
         pages = result["pages"]
+        logger.info("Page 0/%s - %s vacancies so far", pages, len(vacancies))
 
         for page in range(1, pages):
             params["page"] = page
             result = await self._search(params)
             vacancies.extend(result["items"])
+            logger.info("Page %s/%s - %s vacancies so far", page, pages, len(vacancies))
             await asyncio.sleep(0.5)
 
+        logger.info("Fetch complete: %s total vacancies", len(vacancies))
         return vacancies
 
 
@@ -123,4 +138,5 @@ async def get_vacancies() -> list[dict]:
     ) as hh_api_parser:
         raw_vacancies = await hh_api_parser.get_all_vacancies()
         vacancies = hh_api_parser.all_vacancies_to_db_format(raw_vacancies)
+        logger.info("Converted %s vacancies to DB format", len(vacancies))
         return vacancies
