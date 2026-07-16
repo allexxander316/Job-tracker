@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 
-from app.vacancies.dependencies import VacancyServiceDep
+from app.vacancies.dependencies import VacancyServiceDep, VacancySyncServiceDep
 from app.vacancies.schemas import VacancySchema, ChangeStatusSchema
 from app.vacancies.services import VacancyNotFoundError
 
@@ -33,3 +33,10 @@ async def change_status(
         return await vacancy_service.change_status(vacancy_id, payload)
     except VacancyNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+
+@router.post("/sync_all")
+async def synchronize_vacancies(
+    vacancy_service: VacancySyncServiceDep,
+) -> dict:
+    return await vacancy_service.sync_all()

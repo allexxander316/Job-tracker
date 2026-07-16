@@ -90,7 +90,7 @@ class VacancySyncService:
             for field in comparable
         )
 
-    async def sync_all(self) -> None:
+    async def sync_all(self) -> dict:
         """Синхронизирует данные с hh.ru с данными в бд"""
 
         hh_vacancies = await get_vacancies()
@@ -128,3 +128,5 @@ class VacancySyncService:
         logger.info(
             "Sync done: created=%s, updated=%s, skipped=%s", created, updated, skipped
         )
+        report = {"created": created, "updated": updated, "skipped": skipped}
+        return report
