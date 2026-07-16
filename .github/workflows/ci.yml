@@ -18,6 +18,9 @@ jobs:
 
   test:
     runs-on: ubuntu-24.04
+    env:
+      HH_API_ACCESS_TOKEN: placeholder
+      DATABASE_URL: postgresql+asyncpg://u:p@localhost:5432/db  # pragma: allowlist secret
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
