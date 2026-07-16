@@ -17,7 +17,7 @@
 
 ```bash
 cp .env.example .env
-# Заполнить HH_API_ACCESS_TOKEN и (опционально) DATABASE_URL
+# Заполнить HH_API_ACCESS_TOKEN (DATABASE_URL подставится из compose автоматически)
 docker compose up --build
 ```
 
@@ -54,7 +54,7 @@ NEW → VIEWED → APPLIED → INTERVIEW → REJECTED / NOT_SUITABLE / NOT_LIKED
 | Переменная | Обязательная | Описание |
 |------------|-------------|----------|
 | `HH_API_ACCESS_TOKEN` | Да | Токен доступа к API HH.ru |
-| `DATABASE_URL` | Да | Строка подключения к PostgreSQL |
+| `DATABASE_URL` | Да* | Строка подключения к PostgreSQL (не требуется при использовании docker compose, подставляется автоматически) |
 | `LOG_LEVEL` | Нет | Уровень логирования (по умолчанию INFO) |
 
 ## Тестирование
