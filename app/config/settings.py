@@ -8,7 +8,7 @@ ENV_PATH = BASE_DIR / ".env"
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=ENV_PATH)
+    model_config = SettingsConfigDict(env_file=ENV_PATH, extra="ignore")
 
     hh_access_token: str = Field(alias="HH_API_ACCESS_TOKEN")
     hh_base_url: str = "https://api.hh.ru/vacancies"

@@ -1,5 +1,6 @@
 import asyncio
 import re
+from datetime import datetime, timezone
 
 import httpx
 
@@ -9,6 +10,13 @@ from app.parsers.base import AbstractParser
 
 
 logger = get_logger(__name__)
+
+
+def _parse_hh_dt(dt_str: str) -> datetime:
+    """HH API возвращает '2026-07-16T11:38:03+0300' — без двоеточия в offset"""
+    if dt_str[-3] != ":":
+        dt_str = dt_str[:-5] + dt_str[-5:-2] + ":" + dt_str[-2:]
+    return datetime.fromisoformat(dt_str).astimezone(timezone.utc)
 
 
 class HHApiParser(AbstractParser):
@@ -81,8 +89,8 @@ class HHApiParser(AbstractParser):
             if area.get("id") and area.get("id").isdigit()
             else 0,
             "experience": raw.get("experience", {}).get("id"),
-            "created_at": raw["created_at"],
-            "updated_at": raw["created_at"],
+            "created_at": _parse_hh_dt(raw["created_at"]),
+            "updated_at": _parse_hh_dt(raw["created_at"]),
             "status": "NEW",
             # Новые поля, которые ожидает ваша VacancySchema
             "city": city,

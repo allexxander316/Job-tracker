@@ -1,3 +1,4 @@
+from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
@@ -42,6 +43,7 @@ class TestToDbFormat:
         raw = make_raw_vacancy()
         result = parser._to_db_format(raw)
 
+        assert isinstance(result["created_at"], datetime)
         assert result["header"] == "Python Developer"
         assert result["external_id"] == 123
         assert result["salary_from"] == 100_000

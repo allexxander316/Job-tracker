@@ -12,7 +12,7 @@ class VacancyUpdateSchema(BaseModel):
     salary_from: int | None = None
     salary_to: int | None = None
     area: int | None = None
-    experience: int | None = None
+    experience: str | None = None
     city: str | None = None
     work_format: str | None = None
     employer_name: str | None = None

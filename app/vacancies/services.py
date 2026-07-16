@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -115,7 +115,7 @@ class VacancySyncService:
             if self._vacancy_has_changed(vacancy, vacancy_from_db):
                 vacancy_to_db = {
                     **vacancy,
-                    "updated_at": datetime.now(),
+                    "updated_at": datetime.now(timezone.utc),
                     "status": vacancy_from_db.status,
                 }
 
