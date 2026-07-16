@@ -1,0 +1,15 @@
+.venv
+__pycache__
+*.pyc
+.env
+.idea
+.git
+.gitignore
+MDS
+README.md
+tests
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+*.db
