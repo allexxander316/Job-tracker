@@ -2,11 +2,12 @@ from datetime import datetime, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.enums import Status as VacancyStatusEnum
 from app.core.logger import get_logger
 from app.vacancies.models import VacancyORM
 from app.vacancies.repository import VacancyRepository
 from app.parsers.hh_api import get_vacancies
-from app.vacancies.schemas import VacancySchema, VacancyUpdateSchema, ChangeStatusSchema
+from app.vacancies.schemas import VacancySchema, VacancyUpdateSchema
 
 logger = get_logger(__name__)
 
@@ -29,7 +30,7 @@ class VacancyService:
         return vacancy
 
     async def _update_fields(
-        self, external_id: int, data: VacancyUpdateSchema | ChangeStatusSchema
+        self, external_id: int, data: VacancyUpdateSchema
     ) -> VacancySchema:
         vacancy = await self._get_vacancy_or_404(external_id)
         update_dict = data.model_dump(exclude_unset=True)
@@ -51,9 +52,12 @@ class VacancyService:
         return await self._update_fields(external_id, vacancy_update)
 
     async def change_status(
-        self, external_id: int, vacancy_status: ChangeStatusSchema
+        self, external_id: int, new_status: VacancyStatusEnum
     ) -> VacancySchema:
-        return await self._update_fields(external_id, vacancy_status)
+        vacancy = await self._get_vacancy_or_404(external_id)
+        self.vacancy_repository.update_vacancy(vacancy, {"status": new_status})
+        await self.session.commit()
+        return VacancySchema.model_validate(vacancy)
 
     async def get_by_external_id(self, external_id: int) -> VacancySchema:
         vacancy = await self._get_vacancy_or_404(external_id)

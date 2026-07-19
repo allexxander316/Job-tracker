@@ -1,7 +1,7 @@
 import pytest
 
 from app.core.enums import Status
-from app.vacancies.schemas import VacancyUpdateSchema, ChangeStatusSchema
+from app.vacancies.schemas import VacancyUpdateSchema
 from app.vacancies.services import VacancyService, VacancyNotFoundError
 from tests.conftest import make_vacancy_data
 
@@ -48,9 +48,7 @@ class TestVacancyService:
         service = VacancyService(session)
         await service.insert_vacancy(make_vacancy_data(external_id=1))
 
-        result = await service.change_status(
-            1, ChangeStatusSchema(status=Status.VIEWED)
-        )
+        result = await service.change_status(1, Status.VIEWED)
         assert result.status == Status.VIEWED
 
     async def test_delete_by_external_id(self, session):
@@ -72,4 +70,4 @@ class TestVacancyService:
     async def test_change_status_not_found(self, session):
         service = VacancyService(session)
         with pytest.raises(VacancyNotFoundError):
-            await service.change_status(999, ChangeStatusSchema(status=Status.VIEWED))
+            await service.change_status(999, Status.VIEWED)

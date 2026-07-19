@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException, status
 
+from app.core.enums import Status as VacancyStatusEnum
 from app.vacancies.dependencies import VacancyServiceDep, VacancySyncServiceDep
-from app.vacancies.schemas import VacancySchema, ChangeStatusSchema
+from app.vacancies.schemas import VacancySchema
 from app.vacancies.services import VacancyNotFoundError
 
 router = APIRouter(
@@ -27,10 +28,10 @@ async def read_vacancy(
 
 @router.patch("/{vacancy_id}/status")
 async def change_status(
-    vacancy_id: int, payload: ChangeStatusSchema, vacancy_service: VacancyServiceDep
+    vacancy_id: int, new_status: VacancyStatusEnum, vacancy_service: VacancyServiceDep
 ) -> VacancySchema:
     try:
-        return await vacancy_service.change_status(vacancy_id, payload)
+        return await vacancy_service.change_status(vacancy_id, new_status)
     except VacancyNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 

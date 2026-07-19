@@ -90,7 +90,7 @@ class TestVacancyRouters:
             status=Status.VIEWED
         )
 
-        response = client.patch("/vacancies/1/status", json={"status": "VIEWED"})
+        response = client.patch("/vacancies/1/status", params={"new_status": "VIEWED"})
 
         assert response.status_code == 200
         assert response.json()["status"] == "VIEWED"
@@ -99,12 +99,12 @@ class TestVacancyRouters:
     def test_change_status_not_found(self, client, mock_vacancy_service):
         mock_vacancy_service.change_status.side_effect = VacancyNotFoundError
 
-        response = client.patch("/vacancies/1/status", json={"status": "VIEWED"})
+        response = client.patch("/vacancies/1/status", params={"new_status": "VIEWED"})
 
         assert response.status_code == 404
 
     def test_change_status_invalid_payload(self, client, mock_vacancy_service):
-        response = client.patch("/vacancies/1/status", json={"status": "INVALID"})
+        response = client.patch("/vacancies/1/status", params={"new_status": "INVALID"})
 
         assert response.status_code == 422
 

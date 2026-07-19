@@ -26,7 +26,3 @@ class VacancySchema(VacancyUpdateSchema):
     created_at: datetime
     updated_at: datetime
     status: Status = Status.NEW
-
-
-class ChangeStatusSchema(BaseModel):
-    status: Status
