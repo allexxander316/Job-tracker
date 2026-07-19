@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+from fastapi_pagination import Page, paginate
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import Status as VacancyStatusEnum
@@ -8,6 +9,7 @@ from app.vacancies.models import VacancyORM
 from app.vacancies.repository import VacancyRepository
 from app.parsers.hh_api import get_vacancies
 from app.vacancies.schemas import VacancySchema, VacancyUpdateSchema
+from vacancies.schemas import VacancyFilterParams, VacancySortParams
 
 logger = get_logger(__name__)
 
@@ -38,9 +40,11 @@ class VacancyService:
         await self.session.commit()
         return VacancySchema.model_validate(vacancy)
 
-    async def select_vacancies(self) -> list[VacancySchema]:
-        vacancies_orm = await self.vacancy_repository.select_vacancies()
-        return [VacancySchema.model_validate(vacancy) for vacancy in vacancies_orm]
+    async def select_vacancies(
+        self, filters: VacancyFilterParams, sort: VacancySortParams
+    ) -> Page[VacancySchema]:
+        query = self.vacancy_repository.build_select_query(filters, sort)
+        return await paginate(self.session, query)
 
     async def insert_vacancy(self, vacancy_data: dict) -> None:
         self.vacancy_repository.add_vacancy(vacancy_data)
