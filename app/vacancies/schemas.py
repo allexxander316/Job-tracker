@@ -1,8 +1,9 @@
-from datetime import datetime
+from datetime import datetime, date
 
-from pydantic import BaseModel, ConfigDict
+from fastapi import Query
+from pydantic import BaseModel, ConfigDict, model_validator
 
-from app.core.enums import Status
+from app.core.enums import Status, SortField, SortOrder
 
 
 class VacancyUpdateSchema(BaseModel):
@@ -26,3 +27,30 @@ class VacancySchema(VacancyUpdateSchema):
     created_at: datetime
     updated_at: datetime
     status: Status = Status.NEW
+
+
+class VacancyFilterParams(BaseModel):
+    status: Status | None = None
+    salary_min: int | None = Query(None, ge=0)
+    salary_max: int | None = Query(None, ge=0)
+    include_unknown_salary: bool = False
+    city: str | None = None
+    employer_name: str | None = None
+    experience: str | None = None
+    area: int | None = None
+    date_from: date | None = None
+    date_to: date | None = None
+    search: str | None = None
+
+    @model_validator(mode="after")
+    def validate_ranges(self):
+        if self.salary_min and self.salary_max and self.salary_min > self.salary_max:
+            raise ValueError("salary_min > salary_max")
+        if self.date_from and self.date_to and self.date_from > self.date_to:
+            raise ValueError("date_from > date_to")
+        return self
+
+
+class VacancySortParams(BaseModel):
+    sort_by: SortField = SortField.created_at
+    sort_order: SortOrder = SortOrder.desc
