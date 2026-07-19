@@ -135,9 +135,6 @@ class HHApiParser(AbstractParser):
 
 
 async def get_vacancies() -> list[dict]:
-    if settings.hh_access_token is None:
-        raise ValueError("ACCESS_TOKEN must be provided")
-
     async with HHApiParser(
         settings.hh_access_token,
         settings.hh_base_url,
