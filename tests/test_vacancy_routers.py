@@ -1,14 +1,15 @@
-from datetime import datetime
+from datetime import date, datetime
 from unittest.mock import AsyncMock
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from fastapi_pagination import Page, add_pagination
 
 from app.core.enums import Status
 from app.vacancies.dependencies import get_vacancy_service, get_vacancy_sync_service
 from app.vacancies.routers import router as vacancy_router
-from app.vacancies.schemas import VacancySchema
+from app.vacancies.schemas import VacancySchema, VacancyFilterParams
 from app.vacancies.services import VacancyNotFoundError
 
 
@@ -25,6 +26,7 @@ def mock_sync_service():
 @pytest.fixture
 def client(mock_vacancy_service, mock_sync_service):
     app = FastAPI()
+    add_pagination(app)
     app.include_router(vacancy_router)
     app.dependency_overrides[get_vacancy_service] = lambda: mock_vacancy_service
     app.dependency_overrides[get_vacancy_sync_service] = lambda: mock_sync_service
@@ -55,18 +57,25 @@ def make_vacancy_schema(**kwargs) -> VacancySchema:
 
 class TestVacancyRouters:
     def test_read_vacancies(self, client, mock_vacancy_service):
-        mock_vacancy_service.select_vacancies.return_value = [
-            make_vacancy_schema(external_id=1, status=Status.NEW),
-            make_vacancy_schema(external_id=2, header="Go Developer"),
-        ]
+        mock_vacancy_service.select_vacancies.return_value = Page(
+            items=[
+                make_vacancy_schema(external_id=1, status=Status.NEW),
+                make_vacancy_schema(external_id=2, header="Go Developer"),
+            ],
+            total=2,
+            page=1,
+            size=50,
+            pages=1,
+        )
 
         response = client.get("/vacancies")
 
         assert response.status_code == 200
         data = response.json()
-        assert len(data) == 2
-        assert data[0]["header"] == "Python Developer"
-        assert data[1]["header"] == "Go Developer"
+        assert len(data["items"]) == 2
+        assert data["items"][0]["header"] == "Python Developer"
+        assert data["items"][1]["header"] == "Go Developer"
+        assert data["total"] == 2
 
     def test_read_vacancy_found(self, client, mock_vacancy_service):
         mock_vacancy_service.get_by_external_id.return_value = make_vacancy_schema(
@@ -119,3 +128,11 @@ class TestVacancyRouters:
 
         assert response.status_code == 200
         mock_sync_service.sync_all.assert_called_once()
+
+    def test_filter_validation_salary_min_greater_than_max(self):
+        with pytest.raises(ValueError, match="salary_min > salary_max"):
+            VacancyFilterParams(salary_min=200_000, salary_max=100_000)
+
+    def test_filter_validation_date_from_greater_than_to(self):
+        with pytest.raises(ValueError, match="date_from > date_to"):
+            VacancyFilterParams(date_from=date(2026, 6, 1), date_to=date(2026, 1, 1))

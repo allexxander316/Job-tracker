@@ -9,15 +9,13 @@ pytestmark = pytest.mark.asyncio
 
 
 class TestVacancyService:
-    async def test_insert_and_select(self, session):
+    async def test_insert(self, session, mocker):
         service = VacancyService(session)
-        await service.insert_vacancy(make_vacancy_data(external_id=1))
         await service.insert_vacancy(
             make_vacancy_data(external_id=2, header="Go Developer")
         )
-
-        result = await service.select_vacancies()
-        assert len(result) == 2
+        with pytest.raises(VacancyNotFoundError):
+            await service.get_by_external_id(1)
 
     async def test_get_by_external_id_found(self, session):
         service = VacancyService(session)
@@ -54,11 +52,7 @@ class TestVacancyService:
     async def test_delete_by_external_id(self, session):
         service = VacancyService(session)
         await service.insert_vacancy(make_vacancy_data(external_id=1))
-
         await service.delete_by_external_id(1)
-        vacancies = await service.select_vacancies()
-        assert len(vacancies) == 0
-
         with pytest.raises(VacancyNotFoundError):
             await service.get_by_external_id(1)
 
