@@ -1,8 +1,11 @@
-from fastapi import APIRouter, HTTPException, status
+from typing import Annotated
+
+from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi_pagination import Page
 
 from app.core.enums import Status as VacancyStatusEnum
 from app.vacancies.dependencies import VacancyServiceDep, VacancySyncServiceDep
-from app.vacancies.schemas import VacancySchema
+from app.vacancies.schemas import VacancySchema, VacancyFilterParams, VacancySortParams
 from app.vacancies.services import VacancyNotFoundError
 
 router = APIRouter(
@@ -12,8 +15,12 @@ router = APIRouter(
 
 
 @router.get("")
-async def read_vacancies(vacancy_service: VacancyServiceDep) -> list[VacancySchema]:
-    return await vacancy_service.select_vacancies()
+async def read_vacancies(
+    vacancy_service: VacancyServiceDep,
+    filters: Annotated[VacancyFilterParams, Depends(VacancyFilterParams)],
+    sort: Annotated[VacancySortParams, Depends(VacancySortParams)],
+) -> Page[VacancySchema]:
+    return await vacancy_service.select_vacancies(filters, sort)
 
 
 @router.get("/{external_id}")

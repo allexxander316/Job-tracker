@@ -4,8 +4,8 @@ from sqlalchemy import select, or_, and_, Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.vacancies.models import VacancyORM
-from core.enums import SortOrder
-from vacancies.schemas import VacancyFilterParams, VacancySortParams
+from app.core.enums import SortOrder
+from app.vacancies.schemas import VacancyFilterParams, VacancySortParams
 
 
 class VacancyRepository:

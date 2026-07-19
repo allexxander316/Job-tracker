@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
-from fastapi_pagination import Page, paginate
+from fastapi_pagination import Page
+from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import Status as VacancyStatusEnum
@@ -8,8 +9,12 @@ from app.core.logger import get_logger
 from app.vacancies.models import VacancyORM
 from app.vacancies.repository import VacancyRepository
 from app.parsers.hh_api import get_vacancies
-from app.vacancies.schemas import VacancySchema, VacancyUpdateSchema
-from vacancies.schemas import VacancyFilterParams, VacancySortParams
+from app.vacancies.schemas import (
+    VacancySchema,
+    VacancyUpdateSchema,
+    VacancyFilterParams,
+    VacancySortParams,
+)
 
 logger = get_logger(__name__)
 
