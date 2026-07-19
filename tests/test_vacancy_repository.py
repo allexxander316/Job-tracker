@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 
@@ -34,7 +34,8 @@ async def test_update_vacancy(session):
     old_updated_at = vacancy.updated_at
 
     repo.update_vacancy(
-        vacancy, {"header": "Senior Python Developer", "updated_at": datetime.now()}
+        vacancy,
+        {"header": "Senior Python Developer", "updated_at": datetime.now(timezone.utc)},
     )
     await session.commit()
 

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 import pytest_asyncio
@@ -58,8 +58,8 @@ def make_vacancy_data(external_id: int = 1, **kwargs) -> dict:
         "description": "Описание вакансии",
         "url": f"https://hh.ru/vacancy/{external_id}",
         "external_id": external_id,
-        "created_at": datetime(2026, 1, 1),
-        "updated_at": datetime(2026, 1, 1),
+        "created_at": datetime(2026, 1, 1, tzinfo=timezone.utc),
+        "updated_at": datetime(2026, 1, 1, tzinfo=timezone.utc),
         "status": "NEW",
         "salary_from": 100_000,
         "salary_to": 200_000,
