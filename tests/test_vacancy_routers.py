@@ -41,7 +41,7 @@ def make_vacancy_schema(**kwargs) -> VacancySchema:
         "salary_from": 100_000,
         "salary_to": 200_000,
         "area": 113,
-        "experience": 2,
+        "experience": "between1And3",
         "city": "Москва",
         "employer_name": "Яндекс",
         "work_format": "Полный день",
