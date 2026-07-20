@@ -28,6 +28,7 @@ class VacancySchema(VacancyUpdateSchema):
     created_at: datetime
     updated_at: datetime
     status: Status = Status.NEW
+    has_unacknowledged_changes: bool
 
 
 class VacancyFilterParams(BaseModel):
@@ -55,3 +56,13 @@ class VacancyFilterParams(BaseModel):
 class VacancySortParams(BaseModel):
     sort_by: SortField = SortField.created_at
     sort_order: SortOrder = SortOrder.desc
+
+
+class VacancyChangeSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    vacancy_id: int
+    changes: dict
+    created_at: datetime
+    acknowledged: bool
