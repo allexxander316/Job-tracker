@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.vacancies.models import VacancyORM
 from app.core.enums import SortOrder
 from app.vacancies.schemas import VacancyFilterParams, VacancySortParams
+from vacancies.models import VacancyChangeORM
 
 
 class VacancyRepository:
@@ -114,3 +115,14 @@ class VacancyRepository:
         )
         query = query.order_by(order, VacancyORM.id.asc())
         return query
+
+    async def get_unacknowledged_ids(self, vacancy_ids: list[int]) -> set[int]:
+        if not vacancy_ids:
+            return set()
+        result = await self.async_session.execute(
+            select(VacancyChangeORM.vacancy_id).where(
+                VacancyChangeORM.vacancy_id.in_(vacancy_ids),
+                VacancyChangeORM.acknowledged.is_(False),
+            )
+        )
+        return {row[0] for row in result}
