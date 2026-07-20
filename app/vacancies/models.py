@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, UniqueConstraint
+from sqlalchemy import DateTime, ForeignKey, Boolean, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -30,3 +31,15 @@ class VacancyORM(Base):
     __table_args__ = (
         UniqueConstraint("source", "external_id", name="uq_vacancy_source_external_id"),
     )
+
+
+class VacancyChangeORM(Base):
+    __tablename__ = "vacancy_changes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    vacancy_id: Mapped[int] = mapped_column(
+        ForeignKey("vacancies.id", ondelete="CASCADE"), nullable=False
+    )
+    changes: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    acknowledged: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
