@@ -74,7 +74,9 @@ class HHApiParser(AbstractParser):
             f.get("name") for f in raw.get("work_format", []) if f.get("name")
         ]
         work_format_str = (
-            ", ".join(work_formats_list) if work_formats_list else "Не указан"
+            ", ".join(work_formats_list).replace("\u00a0", " ")
+            if work_formats_list
+            else "Не указан"
         )
         employer_name = raw.get("employer", {}).get("name") or "Не указано"
 
