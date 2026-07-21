@@ -16,6 +16,8 @@ from app.vacancies.schemas import (
     VacancySortParams,
     VacancyChangeSchema,
 )
+from app.vacancies.sync_status import sync_tracker
+from app.core.database import async_session
 
 logger = get_logger(__name__)
 
@@ -184,3 +186,20 @@ class VacancySyncService:
         )
         report = {"created": created, "updated": updated, "skipped": skipped}
         return report
+
+    @classmethod
+    async def run_sync_in_background(cls) -> None:
+        """Обёртка для запуска sync_all в фоне с открытием своей сессии и трекингом статуса"""
+        if sync_tracker.is_running():
+            logger.warning("Sync already running, skipping duplicate trigger")
+            return
+
+        sync_tracker.start()
+        try:
+            async with async_session() as session:
+                service = cls(session)
+                report = await service.sync_all()
+                sync_tracker.complete(report)
+        except Exception as e:
+            logger.exception("Background sync failed")
+            sync_tracker.fail(str(e))

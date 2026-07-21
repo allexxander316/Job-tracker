@@ -1,17 +1,18 @@
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, BackgroundTasks
 from fastapi_pagination import Page
 
 from app.core.enums import Status as VacancyStatusEnum
-from app.vacancies.dependencies import VacancyServiceDep, VacancySyncServiceDep
+from app.vacancies.dependencies import VacancyServiceDep
 from app.vacancies.schemas import (
     VacancySchema,
     VacancyFilterParams,
     VacancySortParams,
     VacancyChangeSchema,
 )
-from app.vacancies.services import VacancyNotFoundError
+from app.vacancies.services import VacancyNotFoundError, VacancySyncService
+from app.vacancies.sync_status import sync_tracker
 
 router = APIRouter(
     prefix="/vacancies",
@@ -48,11 +49,19 @@ async def change_status(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@router.post("/sync_all")
-async def synchronize_vacancies(
-    vacancy_service: VacancySyncServiceDep,
-) -> dict:
-    return await vacancy_service.sync_all()
+@router.post(
+    "/sync_all",
+    status_code=status.HTTP_202_ACCEPTED,
+    responses={409: {"description": "Sync already running"}},
+)
+async def synchronize_vacancies(background_tasks: BackgroundTasks) -> dict:
+    if sync_tracker.is_running():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Sync already running"
+        )
+
+    background_tasks.add_task(VacancySyncService.run_sync_in_background)
+    return {"message": "sync started"}
 
 
 @router.get("/{vacancy_id}/changes")
