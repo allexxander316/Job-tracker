@@ -43,6 +43,7 @@ class VacancyFilterParams(BaseModel):
     date_from: date | None = None
     date_to: date | None = None
     search: str | None = None
+    has_unacknowledged_changes: bool | None = None
 
     @model_validator(mode="after")
     def validate_ranges(self):

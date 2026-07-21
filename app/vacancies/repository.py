@@ -53,6 +53,18 @@ class VacancyRepository:
         await self.async_session.delete(vacancy)
         return vacancy
 
+    def _build_unacknowledged_filter(self, value: bool | None) -> list:
+        if value is None:
+            return []
+        unacked_subq = (
+            select(VacancyChangeORM.vacancy_id)
+            .where(VacancyChangeORM.acknowledged.is_(False))
+            .subquery()
+        )
+        if value:
+            return [VacancyORM.id.in_(unacked_subq)]
+        return [~VacancyORM.id.in_(unacked_subq)]
+
     def _build_filters(self, filters: VacancyFilterParams) -> list:
         clauses = []
 
@@ -95,6 +107,9 @@ class VacancyRepository:
             clauses.append(VacancyORM.created_at >= filters.date_from)
         if filters.date_to:
             clauses.append(VacancyORM.created_at <= filters.date_to)
+        clauses.extend(
+            self._build_unacknowledged_filter(filters.has_unacknowledged_changes)
+        )
 
         return clauses
 
