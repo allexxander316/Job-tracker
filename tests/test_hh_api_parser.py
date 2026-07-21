@@ -45,7 +45,8 @@ class TestToDbFormat:
 
         assert isinstance(result["created_at"], datetime)
         assert result["header"] == "Python Developer"
-        assert result["external_id"] == 123
+        assert result["source"] == "hh"
+        assert result["external_id"] == "123"
         assert result["salary_from"] == 100_000
         assert result["salary_to"] == 200_000
         assert result["city"] == "Москва"
@@ -179,9 +180,9 @@ class TestGetVacanciesModule:
         mock_parser = MagicMock()
         mock_parser.get_all_vacancies = AsyncMock(return_value=[{"id": "1"}])
         mock_parser.all_vacancies_to_db_format = MagicMock(
-            return_value=[{"header": "Dev", "external_id": 1}]
+            return_value=[{"header": "Dev", "source": "hh", "external_id": "1"}]
         )
         mock_parser_class.return_value.__aenter__.return_value = mock_parser
 
         result = await get_vacancies()
-        assert result == [{"header": "Dev", "external_id": 1}]
+        assert result == [{"header": "Dev", "source": "hh", "external_id": "1"}]

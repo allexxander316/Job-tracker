@@ -36,7 +36,8 @@ def client(mock_vacancy_service, mock_sync_service):
 def make_vacancy_schema(**kwargs) -> VacancySchema:
     data = {
         "id": 1,
-        "external_id": 1,
+        "source": "hh",
+        "external_id": "1",
         "header": "Python Developer",
         "description": "Описание вакансии",
         "url": "https://hh.ru/vacancy/1",
@@ -59,8 +60,10 @@ class TestVacancyRouters:
     def test_read_vacancies(self, client, mock_vacancy_service):
         mock_vacancy_service.select_vacancies.return_value = Page(
             items=[
-                make_vacancy_schema(external_id=1, status=Status.NEW),
-                make_vacancy_schema(external_id=2, header="Go Developer"),
+                make_vacancy_schema(source="hh", external_id="1", status=Status.NEW),
+                make_vacancy_schema(
+                    source="hh", external_id="2", header="Go Developer"
+                ),
             ],
             total=2,
             page=1,
@@ -78,17 +81,17 @@ class TestVacancyRouters:
         assert data["total"] == 2
 
     def test_read_vacancy_found(self, client, mock_vacancy_service):
-        mock_vacancy_service.get_by_external_id.return_value = make_vacancy_schema(
-            external_id=42
+        mock_vacancy_service.get_by_id.return_value = make_vacancy_schema(
+            id=42,
         )
 
         response = client.get("/vacancies/42")
 
         assert response.status_code == 200
-        assert response.json()["external_id"] == 42
+        assert response.json()["id"] == 42
 
     def test_read_vacancy_not_found(self, client, mock_vacancy_service):
-        mock_vacancy_service.get_by_external_id.side_effect = VacancyNotFoundError
+        mock_vacancy_service.get_by_id.side_effect = VacancyNotFoundError
 
         response = client.get("/vacancies/999")
 
