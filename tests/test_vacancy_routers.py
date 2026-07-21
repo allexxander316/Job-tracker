@@ -51,6 +51,7 @@ def make_vacancy_schema(**kwargs) -> VacancySchema:
         "created_at": datetime(2026, 1, 1),
         "updated_at": datetime(2026, 1, 1),
         "status": Status.NEW,
+        "has_unacknowledged_changes": False,
     }
     data.update(**kwargs)
     return VacancySchema(**data)

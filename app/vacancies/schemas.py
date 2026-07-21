@@ -28,7 +28,7 @@ class VacancySchema(VacancyUpdateSchema):
     created_at: datetime
     updated_at: datetime
     status: Status = Status.NEW
-    has_unacknowledged_changes: bool
+    has_unacknowledged_changes: bool = False
 
 
 class VacancyFilterParams(BaseModel):

@@ -3,10 +3,9 @@ from typing import Any
 from sqlalchemy import select, or_, and_, Select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.vacancies.models import VacancyORM
+from app.vacancies.models import VacancyORM, VacancyChangeORM
 from app.core.enums import SortOrder
 from app.vacancies.schemas import VacancyFilterParams, VacancySortParams
-from vacancies.models import VacancyChangeORM
 
 
 class VacancyRepository:
