@@ -64,5 +64,5 @@ class VacancyChangeSchema(BaseModel):
     id: int
     vacancy_id: int
     changes: dict
-    created_at: datetime
+    changed_at: datetime
     acknowledged: bool
