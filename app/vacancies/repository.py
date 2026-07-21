@@ -110,6 +110,8 @@ class VacancyRepository:
         clauses.extend(
             self._build_unacknowledged_filter(filters.has_unacknowledged_changes)
         )
+        if filters.work_format:
+            clauses.append(VacancyORM.work_format.ilike(f"%{filters.work_format}%"))
 
         return clauses
 

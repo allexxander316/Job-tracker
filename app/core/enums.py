@@ -13,11 +13,17 @@ class Status(str, Enum):
 
 
 class SortField(str, Enum):
+    id = "id"
     created_at = "created_at"
     updated_at = "updated_at"
     salary_from = "salary_from"
     salary_to = "salary_to"
     header = "header"
+    status = "status"
+    work_format = "work_format"
+    city = "city"
+    employer_name = "employer_name"
+    experience = "experience"
 
 
 class SortOrder(str, Enum):
