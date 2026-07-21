@@ -56,7 +56,7 @@ class VacancyFilterParams(BaseModel):
 
 
 class VacancySortParams(BaseModel):
-    sort_by: SortField = SortField.created_at
+    sort_by: SortField = SortField.id
     sort_order: SortOrder = SortOrder.desc
 
 
