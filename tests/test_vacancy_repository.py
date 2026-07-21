@@ -246,3 +246,76 @@ async def test_delete_vacancy(session, repo):
 
     deleted = await repo.get_by_id(created.id)
     assert deleted is None
+
+
+async def test_get_changes_by_vacancy(session, repo):
+    from app.vacancies.models import VacancyChangeORM
+    from datetime import datetime, timezone
+
+    vacancy = repo.add_vacancy(make_vacancy_data())
+    await session.commit()
+
+    change = VacancyChangeORM(
+        vacancy_id=vacancy.id,
+        changes={"header": {"old": "Python", "new": "Senior Python"}},
+        changed_at=datetime.now(timezone.utc),
+        acknowledged=False,
+    )
+    session.add(change)
+    await session.commit()
+
+    changes = await repo.get_changes_by_vacancy(vacancy.id)
+    assert len(changes) == 1
+    assert changes[0].changes["header"]["old"] == "Python"
+
+
+async def test_get_unacknowledged_ids(session, repo):
+    from app.vacancies.models import VacancyChangeORM
+    from datetime import datetime, timezone
+
+    v1 = repo.add_vacancy(make_vacancy_data(external_id="1"))
+    v2 = repo.add_vacancy(make_vacancy_data(external_id="2"))
+    await session.commit()
+
+    session.add(
+        VacancyChangeORM(
+            vacancy_id=v1.id,
+            changes={},
+            changed_at=datetime.now(timezone.utc),
+            acknowledged=True,
+        )
+    )
+    session.add(
+        VacancyChangeORM(
+            vacancy_id=v2.id,
+            changes={},
+            changed_at=datetime.now(timezone.utc),
+            acknowledged=False,
+        )
+    )
+    await session.commit()
+
+    result = await repo.get_unacknowledged_ids([v1.id, v2.id])
+    assert result == {v2.id}
+
+
+async def test_acknowledge_changes(session, repo):
+    from app.vacancies.models import VacancyChangeORM
+    from datetime import datetime, timezone
+
+    vacancy = repo.add_vacancy(make_vacancy_data())
+    await session.commit()
+
+    change = VacancyChangeORM(
+        vacancy_id=vacancy.id,
+        changes={"header": {"old": "Python", "new": "Senior"}},
+        changed_at=datetime.now(timezone.utc),
+        acknowledged=False,
+    )
+    session.add(change)
+    await session.commit()
+
+    await repo.acknowledge_changes(vacancy.id)
+
+    changes = await repo.get_changes_by_vacancy(vacancy.id)
+    assert changes[0].acknowledged is True

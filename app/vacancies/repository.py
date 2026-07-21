@@ -125,3 +125,22 @@ class VacancyRepository:
             )
         )
         return {row[0] for row in result}
+
+    async def get_changes_by_vacancy(self, vacancy_id: int) -> list[VacancyChangeORM]:
+        stmt = (
+            select(VacancyChangeORM)
+            .where(VacancyChangeORM.vacancy_id == vacancy_id)
+            .order_by(VacancyChangeORM.changed_at.desc())
+        )
+        result = await self.async_session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def acknowledge_changes(self, vacancy_id: int) -> None:
+        stmt = select(VacancyChangeORM).where(
+            VacancyChangeORM.vacancy_id == vacancy_id,
+            VacancyChangeORM.acknowledged.is_(False),
+        )
+        result = await self.async_session.execute(stmt)
+        records = result.scalars().all()
+        for record in records:
+            record.acknowledged = True
