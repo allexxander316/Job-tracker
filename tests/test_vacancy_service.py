@@ -66,3 +66,49 @@ class TestVacancyService:
     async def test_change_status_not_found(self, session, service):
         with pytest.raises(VacancyNotFoundError):
             await service.change_status(999, Status.VIEWED)
+
+    async def test_get_changes(self, session, service):
+        from app.vacancies.models import VacancyChangeORM
+        from datetime import datetime, timezone
+
+        created = await service.insert_vacancy(make_vacancy_data())
+        change = VacancyChangeORM(
+            vacancy_id=created.id,
+            changes={"header": {"old": "Python", "new": "Senior"}},
+            changed_at=datetime.now(timezone.utc),
+            acknowledged=False,
+        )
+        session.add(change)
+        await session.commit()
+
+        changes = await service.get_changes(created.id)
+        assert len(changes) == 1
+        assert changes[0].changes["header"]["old"] == "Python"
+
+    async def test_get_changes_not_found(self, session, service):
+        with pytest.raises(VacancyNotFoundError):
+            await service.get_changes(999)
+
+    async def test_acknowledge_changes(self, session, service):
+        from app.vacancies.models import VacancyChangeORM
+        from datetime import datetime, timezone
+
+        created = await service.insert_vacancy(make_vacancy_data())
+        change = VacancyChangeORM(
+            vacancy_id=created.id,
+            changes={"header": {"old": "Python", "new": "Senior"}},
+            changed_at=datetime.now(timezone.utc),
+            acknowledged=False,
+        )
+        session.add(change)
+        await session.commit()
+
+        result = await service.acknowledge_changes(created.id)
+        assert result.id == created.id
+
+        changes = await service.get_changes(created.id)
+        assert changes[0].acknowledged is True
+
+    async def test_acknowledge_changes_not_found(self, session, service):
+        with pytest.raises(VacancyNotFoundError):
+            await service.acknowledge_changes(999)

@@ -14,6 +14,7 @@ from app.vacancies.schemas import (
     VacancyUpdateSchema,
     VacancyFilterParams,
     VacancySortParams,
+    VacancyChangeSchema,
 )
 
 logger = get_logger(__name__)
@@ -92,6 +93,17 @@ class VacancyService:
         vacancy = await self._get_vacancy_or_404(vacancy_id)
         await self.vacancy_repository.delete_vacancy(vacancy)
         await self.session.commit()
+
+    async def get_changes(self, vacancy_id: int) -> list[VacancyChangeSchema]:
+        await self._get_vacancy_or_404(vacancy_id)
+        orm_changes = await self.vacancy_repository.get_changes_by_vacancy(vacancy_id)
+        return [VacancyChangeSchema.model_validate(c) for c in orm_changes]
+
+    async def acknowledge_changes(self, vacancy_id: int) -> VacancySchema:
+        vacancy = await self._get_vacancy_or_404(vacancy_id)
+        await self.vacancy_repository.acknowledge_changes(vacancy_id)
+        await self.session.commit()
+        return VacancySchema.model_validate(vacancy)
 
 
 class VacancySyncService:

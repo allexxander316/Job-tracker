@@ -5,7 +5,12 @@ from fastapi_pagination import Page
 
 from app.core.enums import Status as VacancyStatusEnum
 from app.vacancies.dependencies import VacancyServiceDep, VacancySyncServiceDep
-from app.vacancies.schemas import VacancySchema, VacancyFilterParams, VacancySortParams
+from app.vacancies.schemas import (
+    VacancySchema,
+    VacancyFilterParams,
+    VacancySortParams,
+    VacancyChangeSchema,
+)
 from app.vacancies.services import VacancyNotFoundError
 
 router = APIRouter(
@@ -48,3 +53,23 @@ async def synchronize_vacancies(
     vacancy_service: VacancySyncServiceDep,
 ) -> dict:
     return await vacancy_service.sync_all()
+
+
+@router.get("/{vacancy_id}/changes")
+async def read_vacancy_changes(
+    vacancy_id: int, vacancy_service: VacancyServiceDep
+) -> list[VacancyChangeSchema]:
+    try:
+        return await vacancy_service.get_changes(vacancy_id)
+    except VacancyNotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+
+@router.post("/{vacancy_id}/acknowledge_changes")
+async def acknowledge_vacancy_changes(
+    vacancy_id: int, vacancy_service: VacancyServiceDep
+) -> VacancySchema:
+    try:
+        return await vacancy_service.acknowledge_changes(vacancy_id)
+    except VacancyNotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)

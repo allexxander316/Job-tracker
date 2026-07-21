@@ -9,7 +9,11 @@ from fastapi_pagination import Page, add_pagination
 from app.core.enums import Status
 from app.vacancies.dependencies import get_vacancy_service, get_vacancy_sync_service
 from app.vacancies.routers import router as vacancy_router
-from app.vacancies.schemas import VacancySchema, VacancyFilterParams
+from app.vacancies.schemas import (
+    VacancySchema,
+    VacancyFilterParams,
+    VacancyChangeSchema,
+)
 from app.vacancies.services import VacancyNotFoundError
 
 
@@ -55,6 +59,20 @@ def make_vacancy_schema(**kwargs) -> VacancySchema:
     }
     data.update(**kwargs)
     return VacancySchema(**data)
+
+
+def make_vacancy_changes_schema(**kwargs) -> VacancyChangeSchema:
+    from app.vacancies.schemas import VacancyChangeSchema
+
+    data = {
+        "id": 1,
+        "vacancy_id": 1,
+        "changes": {"header": {"old": "Python", "new": "Senior"}},
+        "changed_at": datetime(2026, 1, 1),
+        "acknowledged": False,
+    }
+    data.update(**kwargs)
+    return VacancyChangeSchema(**data)
 
 
 class TestVacancyRouters:
@@ -140,3 +158,26 @@ class TestVacancyRouters:
     def test_filter_validation_date_from_greater_than_to(self):
         with pytest.raises(ValueError, match="date_from > date_to"):
             VacancyFilterParams(date_from=date(2026, 6, 1), date_to=date(2026, 1, 1))
+
+    def test_read_changes(self, client, mock_vacancy_service):
+        mock_vacancy_service.get_changes.return_value = [
+            make_vacancy_changes_schema(),
+        ]
+        response = client.get("/vacancies/1/changes")
+        assert response.status_code == 200
+        assert len(response.json()) == 1
+
+    def test_read_changes_not_found(self, client, mock_vacancy_service):
+        mock_vacancy_service.get_changes.side_effect = VacancyNotFoundError
+        response = client.get("/vacancies/999/changes")
+        assert response.status_code == 404
+
+    def test_acknowledge_changes(self, client, mock_vacancy_service):
+        mock_vacancy_service.acknowledge_changes.return_value = make_vacancy_schema()
+        response = client.post("/vacancies/1/acknowledge_changes")
+        assert response.status_code == 200
+
+    def test_acknowledge_changes_not_found(self, client, mock_vacancy_service):
+        mock_vacancy_service.acknowledge_changes.side_effect = VacancyNotFoundError
+        response = client.post("/vacancies/999/acknowledge_changes")
+        assert response.status_code == 404
