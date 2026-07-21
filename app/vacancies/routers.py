@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, status, Depends, BackgroundTasks
-from fastapi_pagination import Page
+from fastapi_pagination import Page, Params
 
 from app.core.enums import Status as VacancyStatusEnum
 from app.vacancies.dependencies import VacancyServiceDep
@@ -25,8 +25,14 @@ async def read_vacancies(
     vacancy_service: VacancyServiceDep,
     filters: Annotated[VacancyFilterParams, Depends(VacancyFilterParams)],
     sort: Annotated[VacancySortParams, Depends(VacancySortParams)],
+    params: Annotated[Params, Depends(Params)],
 ) -> Page[VacancySchema]:
-    return await vacancy_service.select_vacancies(filters, sort)
+    return await vacancy_service.select_vacancies(filters, sort, params)
+
+
+@router.get("/sync/status")
+async def sync_status() -> dict | None:
+    return sync_tracker.get()
 
 
 @router.get("/{vacancy_id}")
