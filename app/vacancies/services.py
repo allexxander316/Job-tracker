@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import Status as VacancyStatusEnum
 from app.core.logger import get_logger
-from app.vacancies.models import VacancyORM
+from app.vacancies.models import VacancyORM, VacancyChangeORM
 from app.vacancies.repository import VacancyRepository
 from app.parsers.hh_api import get_vacancies
 from app.vacancies.schemas import (
@@ -114,9 +114,7 @@ class VacancySyncService:
         self.vacancy_repository = VacancyRepository(session)
 
     @staticmethod
-    def _vacancy_has_changed(vacancy_from_hh: dict, vacancy_from_db) -> bool:
-        """Проверяет, изменились ли значимые поля вакансии"""
-
+    def _build_diff(old, new: dict) -> dict:
         comparable = {
             "header",
             "description",
@@ -126,10 +124,13 @@ class VacancySyncService:
             "area",
             "experience",
         }
-        return any(
-            vacancy_from_hh.get(field) != getattr(vacancy_from_db, field, None)
-            for field in comparable
-        )
+        diff = {}
+        for field in comparable:
+            old_val = getattr(old, field, None)
+            new_val = new.get(field)
+            if old_val != new_val:
+                diff[field] = {"old": old_val, "new": new_val}
+        return diff
 
     async def sync_all(self) -> dict:
         """Синхронизирует данные с hh.ru с данными в бд"""
@@ -154,12 +155,23 @@ class VacancySyncService:
                 created += 1
                 continue
 
-            if self._vacancy_has_changed(vacancy, vacancy_from_db):
+            diff = self._build_diff(vacancy_from_db, vacancy)
+
+            if diff:
                 vacancy_to_db = {
                     **vacancy,
                     "updated_at": datetime.now(timezone.utc),
                     "status": vacancy_from_db.status,
                 }
+
+                self.session.add(
+                    VacancyChangeORM(
+                        vacancy_id=vacancy_from_db.id,
+                        changes=diff,
+                        changed_at=datetime.now(timezone.utc),
+                        acknowledged=False,
+                    )
+                )
 
                 self.vacancy_repository.update_vacancy(vacancy_from_db, vacancy_to_db)
                 updated += 1

@@ -1,9 +1,11 @@
 from unittest.mock import patch
 
 import pytest
+from sqlalchemy import select
 
 from app.vacancies.repository import VacancyRepository
 from app.vacancies.services import VacancySyncService
+from app.vacancies.models import VacancyORM, VacancyChangeORM
 from tests.conftest import make_vacancy_data
 
 
@@ -102,22 +104,17 @@ class TestVacancySyncService:
         all_v = await repo.select_vacancies()
         assert len(all_v) == 0
 
-    def test_vacancy_has_changed_true(self):
-        from_db = type(
-            "Vacancy",
-            (),
-            {
-                "header": "Python",
-                "description": "desc",
-                "url": "url",
-                "salary_from": 100,
-                "salary_to": 200,
-                "area": 113,
-                "experience": 2,
-            },
-        )()
-
-        from_hh = {
+    def test_build_diff_detects_changes(self):
+        old = VacancyORM(
+            header="Python",
+            description="desc",
+            url="url",
+            salary_from=100,
+            salary_to=200,
+            area=113,
+            experience="between1And3",
+        )
+        new = {
             "header": "Python Changed",
             "description": "desc",
             "url": "url",
@@ -126,52 +123,45 @@ class TestVacancySyncService:
             "area": 113,
             "experience": 2,
         }
+        diff = VacancySyncService._build_diff(old, new)
+        assert diff == {"header": {"old": "Python", "new": "Python Changed"}}
 
-        assert VacancySyncService._vacancy_has_changed(from_hh, from_db) is True
-
-    def test_vacancy_has_changed_false(self):
-        from_db = type(
-            "Vacancy",
-            (),
-            {
-                "header": "Python",
-                "description": "desc",
-                "url": "url",
-                "salary_from": 100,
-                "salary_to": 200,
-                "area": 113,
-                "experience": 2,
-            },
-        )()
-
-        from_hh = {
-            "header": "Python",
-            "description": "desc",
-            "url": "url",
-            "salary_from": 100,
-            "salary_to": 200,
-            "area": 113,
-            "experience": 2,
+    def test_build_diff_empty_when_no_changes(self):
+        old = VacancyORM(
+            header="Python",
+            description="desc",
+            url="url",
+            salary_from=100,
+            salary_to=200,
+            area=113,
+            experience="between1And3",
+        )
+        new = {
+            k: getattr(old, k)
+            for k in (
+                "header",
+                "description",
+                "url",
+                "salary_from",
+                "salary_to",
+                "area",
+                "experience",
+            )
         }
+        diff = VacancySyncService._build_diff(old, new)
+        assert diff == {}
 
-        assert VacancySyncService._vacancy_has_changed(from_hh, from_db) is False
-
-    def test_vacancy_has_changed_ignores_non_comparable(self):
-        from_db = type(
-            "Vacancy",
-            (),
-            {
-                "header": "Python",
-                "description": "desc",
-                "url": "url",
-                "salary_from": 100,
-                "salary_to": 200,
-                "area": 113,
-                "experience": 2,
-            },
-        )()
-
-        from_hh = {
+    def test_build_diff_ignores_non_comparable(self):
+        old = VacancyORM(
+            header="Python",
+            description="desc",
+            url="url",
+            salary_from=100,
+            salary_to=200,
+            area=113,
+            experience="between1And3",
+        )
+        new = {
             "header": "Python",
             "description": "desc",
             "url": "url",
@@ -182,5 +172,31 @@ class TestVacancySyncService:
             "city": "Moscow",
             "status": "VIEWED",
         }
+        diff = VacancySyncService._build_diff(old, new)
+        assert diff == {}
 
-        assert VacancySyncService._vacancy_has_changed(from_hh, from_db) is False
+    @pytest.mark.asyncio
+    @patch("app.vacancies.services.get_vacancies")
+    async def test_sync_all_creates_change_record(self, mock_get_vacancies, session):
+        repo = VacancyRepository(session)
+        repo.add_vacancy(make_vacancy_data(external_id="1"))
+        await session.commit()
+
+        mock_get_vacancies.return_value = [
+            make_vacancy_data(external_id="1", header="Senior Python Developer"),
+        ]
+
+        service = VacancySyncService(session)
+        report = await service.sync_all()
+
+        assert report["updated"] == 1
+        assert report["created"] == 0
+        assert report["skipped"] == 0
+
+        stmt = select(VacancyChangeORM)
+        result = await session.execute(stmt)
+        changes = result.scalars().all()
+        assert len(changes) == 1
+        assert changes[0].changes["header"]["old"] == "Python Developer"
+        assert changes[0].changes["header"]["new"] == "Senior Python Developer"
+        assert changes[0].acknowledged is False
