@@ -30,16 +30,16 @@ class VacancyService:
         self.session = session
         self.vacancy_repository = VacancyRepository(session)
 
-    async def _get_vacancy_or_404(self, external_id: int) -> VacancyORM:
-        vacancy = await self.vacancy_repository.get_by_external_id(external_id)
+    async def _get_vacancy_or_404(self, vacancy_id: int) -> VacancyORM:
+        vacancy = await self.vacancy_repository.get_by_id(vacancy_id)
         if vacancy is None:
-            raise VacancyNotFoundError(f"Вакансия с id {external_id} не найдена")
+            raise VacancyNotFoundError(f"Вакансия с id {vacancy_id} не найдена")
         return vacancy
 
     async def _update_fields(
-        self, external_id: int, data: VacancyUpdateSchema
+        self, vacancy_id: int, data: VacancyUpdateSchema
     ) -> VacancySchema:
-        vacancy = await self._get_vacancy_or_404(external_id)
+        vacancy = await self._get_vacancy_or_404(vacancy_id)
         update_dict = data.model_dump(exclude_unset=True)
         self.vacancy_repository.update_vacancy(vacancy, update_dict)
         await self.session.commit()
@@ -51,29 +51,30 @@ class VacancyService:
         query = self.vacancy_repository.build_select_query(filters, sort)
         return await paginate(self.session, query)
 
-    async def insert_vacancy(self, vacancy_data: dict) -> None:
-        self.vacancy_repository.add_vacancy(vacancy_data)
+    async def insert_vacancy(self, vacancy_data: dict) -> VacancySchema:
+        orm = self.vacancy_repository.add_vacancy(vacancy_data)
         await self.session.commit()
+        return VacancySchema.model_validate(orm)
 
     async def update_vacancy(
-        self, external_id: int, vacancy_update: VacancyUpdateSchema
+        self, vacancy_id: int, vacancy_update: VacancyUpdateSchema
     ) -> VacancySchema:
-        return await self._update_fields(external_id, vacancy_update)
+        return await self._update_fields(vacancy_id, vacancy_update)
 
     async def change_status(
-        self, external_id: int, new_status: VacancyStatusEnum
+        self, vacancy_id: int, new_status: VacancyStatusEnum
     ) -> VacancySchema:
-        vacancy = await self._get_vacancy_or_404(external_id)
+        vacancy = await self._get_vacancy_or_404(vacancy_id)
         self.vacancy_repository.update_vacancy(vacancy, {"status": new_status})
         await self.session.commit()
         return VacancySchema.model_validate(vacancy)
 
-    async def get_by_external_id(self, external_id: int) -> VacancySchema:
-        vacancy = await self._get_vacancy_or_404(external_id)
+    async def get_by_id(self, vacancy_id: int) -> VacancySchema:
+        vacancy = await self._get_vacancy_or_404(vacancy_id)
         return VacancySchema.model_validate(vacancy)
 
-    async def delete_by_external_id(self, external_id: int) -> None:
-        vacancy = await self._get_vacancy_or_404(external_id)
+    async def delete_by_id(self, vacancy_id: int) -> None:
+        vacancy = await self._get_vacancy_or_404(vacancy_id)
         await self.vacancy_repository.delete_vacancy(vacancy)
         await self.session.commit()
 
@@ -109,16 +110,17 @@ class VacancySyncService:
         hh_vacancies = await get_vacancies()
         logger.info("Syncing %s vacancies", len(hh_vacancies))
 
-        existing_ids = [v["external_id"] for v in hh_vacancies]
-        existing = await self.vacancy_repository.get_all_by_external_ids(existing_ids)
-        existing_map = {v.external_id: v for v in existing}
+        pairs = [(v["source"], v["external_id"]) for v in hh_vacancies]
+        existing = await self.vacancy_repository.get_all_by_source_external_ids(pairs)
+        existing_map = {(v.source, v.external_id): v for v in existing}
 
         created = 0
         updated = 0
         skipped = 0
 
         for vacancy in hh_vacancies:
-            vacancy_from_db = existing_map.get(vacancy["external_id"])
+            key = (vacancy["source"], vacancy["external_id"])
+            vacancy_from_db = existing_map.get(key)
 
             if vacancy_from_db is None:
                 self.vacancy_repository.add_vacancy(vacancy)

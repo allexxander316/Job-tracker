@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy import select, or_, and_, Select
+from sqlalchemy import select, or_, and_, Select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.vacancies.models import VacancyORM
@@ -16,21 +16,34 @@ class VacancyRepository:
         result = await self.async_session.scalars(select(VacancyORM))
         return list(result.all())
 
-    async def get_by_external_id(self, external_id: int) -> VacancyORM | None:
-        stmt = select(VacancyORM).where(VacancyORM.external_id == external_id)
+    async def get_by_id(self, vacancy_id: int) -> VacancyORM | None:
+        stmt = select(VacancyORM).where(VacancyORM.id == vacancy_id)
         vacancy = await self.async_session.execute(stmt)
         return vacancy.scalar_one_or_none()
 
-    async def get_all_by_external_ids(
-        self, external_ids: list[int]
+    async def get_by_source_external_id(
+        self, source: str, external_id: str
+    ) -> VacancyORM | None:
+        stmt = select(VacancyORM).where(
+            VacancyORM.source == source, VacancyORM.external_id == external_id
+        )
+        vacancy = await self.async_session.execute(stmt)
+        return vacancy.scalar_one_or_none()
+
+    async def get_all_by_source_external_ids(
+        self, pairs: list[tuple[str, str]]
     ) -> list[VacancyORM]:
-        stmt = select(VacancyORM).where(VacancyORM.external_id.in_(external_ids))
+        stmt = select(VacancyORM).where(
+            tuple_(VacancyORM.source, VacancyORM.external_id).in_(pairs)
+        )
         result = await self.async_session.execute(stmt)
         return list(result.scalars().all())
 
-    def add_vacancy(self, vacancy_data: dict) -> None:
+    def add_vacancy(self, vacancy_data: dict) -> VacancyORM:
         """Добавляет в сессию без сохранения"""
-        self.async_session.add(VacancyORM(**vacancy_data))
+        vacancy = VacancyORM(**vacancy_data)
+        self.async_session.add(vacancy)
+        return vacancy
 
     def update_vacancy(self, vacancy: VacancyORM, vacancy_data: dict) -> None:
         for key, value in vacancy_data.items():

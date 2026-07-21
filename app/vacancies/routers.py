@@ -23,22 +23,22 @@ async def read_vacancies(
     return await vacancy_service.select_vacancies(filters, sort)
 
 
-@router.get("/{external_id}")
+@router.get("/{vacancy_id}")
 async def read_vacancy(
-    external_id: int, vacancy_service: VacancyServiceDep
+    vacancy_id: int, vacancy_service: VacancyServiceDep
 ) -> VacancySchema:
     try:
-        return await vacancy_service.get_by_external_id(external_id)
+        return await vacancy_service.get_by_id(vacancy_id)
     except VacancyNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@router.patch("/{external_id}/status")
+@router.patch("/{vacancy_id}/status")
 async def change_status(
-    external_id: int, new_status: VacancyStatusEnum, vacancy_service: VacancyServiceDep
+    vacancy_id: int, new_status: VacancyStatusEnum, vacancy_service: VacancyServiceDep
 ) -> VacancySchema:
     try:
-        return await vacancy_service.change_status(external_id, new_status)
+        return await vacancy_service.change_status(vacancy_id, new_status)
     except VacancyNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 

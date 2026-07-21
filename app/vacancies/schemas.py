@@ -23,7 +23,8 @@ class VacancySchema(VacancyUpdateSchema):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    external_id: int
+    external_id: str
+    source: str
     created_at: datetime
     updated_at: datetime
     status: Status = Status.NEW

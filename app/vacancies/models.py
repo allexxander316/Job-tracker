@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime
+from sqlalchemy import DateTime, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -14,7 +14,8 @@ class VacancyORM(Base):
     header: Mapped[str]
     description: Mapped[str]
     url: Mapped[str]
-    external_id: Mapped[int] = mapped_column(unique=True)
+    source: Mapped[str]
+    external_id: Mapped[str]
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     status: Mapped[str] = mapped_column(default=Status.NEW)
@@ -25,3 +26,7 @@ class VacancyORM(Base):
     city: Mapped[str | None]
     employer_name: Mapped[str | None]
     work_format: Mapped[str] = mapped_column(default="Не указан")
+
+    __table_args__ = (
+        UniqueConstraint("source", "external_id", name="uq_vacancy_source_external_id"),
+    )

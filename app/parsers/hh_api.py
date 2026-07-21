@@ -82,7 +82,8 @@ class HHApiParser(AbstractParser):
             "header": raw["name"],
             "description": description,
             "url": raw["alternate_url"],
-            "external_id": int(raw["id"]),
+            "source": "hh",
+            "external_id": raw["id"],
             "salary_from": salary.get("from") or 0,
             "salary_to": salary.get("to") or 0,
             "area": int(area.get("id"))
