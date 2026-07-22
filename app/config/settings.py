@@ -12,8 +12,8 @@ class Settings(BaseSettings):
 
     hh_access_token: str = Field(alias="HH_API_ACCESS_TOKEN")
     hh_base_url: str = "https://api.hh.ru/vacancies"
-    hh_professional_role: int = 96
-    hh_search_text: str = "python"
+    hh_professional_role: int = Field(alias="HH_PROFESSIONAL_ROLE")
+    search_text: str = Field(alias="SEARCH_TEXT")
     database_url: str = Field(alias="DATABASE_URL")
     log_level: str = Field(alias="LOG_LEVEL", default="INFO")
 

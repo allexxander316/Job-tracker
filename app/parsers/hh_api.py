@@ -142,7 +142,7 @@ async def get_vacancies() -> list[dict]:
         settings.hh_access_token,
         settings.hh_base_url,
         settings.hh_professional_role,
-        settings.hh_search_text,
+        settings.search_text,
     ) as hh_api_parser:
         raw_vacancies = await hh_api_parser.get_all_vacancies()
         vacancies = hh_api_parser.all_vacancies_to_db_format(raw_vacancies)
