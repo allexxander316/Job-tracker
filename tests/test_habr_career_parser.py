@@ -243,14 +243,10 @@ class TestGetVacanciesModule:
         mock_settings.search_text = "python"
         mock_parser = MagicMock()
         mock_parser.get_all_vacancies = AsyncMock(
-            return_value=[
-                {"header": "Dev", "source": "habr_career", "external_id": "1"}
-            ]
+            return_value=[{"header": "Dev", "source": "habr", "external_id": "1"}]
         )
         mock_parser_class.return_value.__aenter__.return_value = mock_parser
 
         result = await get_vacancies()
 
-        assert result == [
-            {"header": "Dev", "source": "habr_career", "external_id": "1"}
-        ]
+        assert result == [{"header": "Dev", "source": "habr", "external_id": "1"}]

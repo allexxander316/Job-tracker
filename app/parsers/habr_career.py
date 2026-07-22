@@ -109,7 +109,7 @@ class HabrCareerParser(AbstractParser):
             "header": header,
             "description": description,
             "url": url,
-            "source": "habr_career",
+            "source": "habr",
             "external_id": match.group(1),
             "salary_from": salary_from,
             "salary_to": salary_to,

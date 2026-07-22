@@ -3,5 +3,5 @@ from app.parsers.habr_career import get_vacancies as get_habr
 
 PARSERS = [
     ("hh", get_hh),
-    ("habr_career", get_habr),
+    ("habr", get_habr),
 ]
