@@ -1,4 +1,5 @@
 import re
+from datetime import datetime, timezone
 
 import httpx
 from bs4 import BeautifulSoup
@@ -30,7 +31,22 @@ class HabrCareerParser(AbstractParser):
         return resp.text
 
     @staticmethod
-    def _parse_card(card) -> dict | None:
+    def _parse_salary(text: str | None) -> tuple[int, int]:
+        if not text:
+            return 0, 0
+        text = text.replace("\u202f", "").replace(" ", "").replace("₽", "")
+        numbers = re.findall(r"\d+", text)
+        if len(numbers) == 2:
+            return int(numbers[0]), int(numbers[1])
+        if len(numbers) == 1:
+            if "от" in text:
+                return int(numbers[0]), 0
+            if "до" in text:
+                return 0, int(numbers[0])
+            return int(numbers[0]), 0
+        return 0, 0
+
+    def _parse_card(self, card) -> dict | None:
         title_el = card.select_one(".vacancy-card__title-link")
         if not title_el:
             return None
@@ -42,17 +58,64 @@ class HabrCareerParser(AbstractParser):
 
         header = title_el.get_text(strip=True)
 
-        company_el = card.select_one(".vacancy-card__company a")
-        employer_name = company_el.get_text(strip=True) if company_el else "Не указано"
+        company_link = card.select_one(".vacancy-card__company a")
+        employer_name = (
+            company_link.get_text(strip=True) if company_link else "Не указано"
+        )
+
+        salary_el = card.select_one(".basic-salary")
+        salary_from, salary_to = self._parse_salary(
+            salary_el.get_text(strip=True) if salary_el else None
+        )
+
+        city = "Не указан"
+        experience = "Не указано"
+        work_format = "На месте работодателя"
+
+        meta = card.select_one(".vacancy-card__meta")
+        if meta:
+            for chip in meta.select(".basic-chip"):
+                icon_use = chip.select_one(".chip-with-icon__icon use")
+                text_el = chip.select_one(".chip-with-icon__text")
+                if not text_el or not icon_use:
+                    continue
+                content = text_el.get_text(strip=True)
+                href = icon_use.get("xlink:href", "")
+
+                if "placemark" in href:
+                    city = content
+                elif "удален" in content.lower():
+                    work_format = "Можно удаленно"
+
+        description = ", ".join(
+            a.get_text(strip=True) for a in card.select(".vacancy-card__skills a")
+        )
+
+        time_el = card.select_one("time")
+        created_at = None
+        if time_el and time_el.has_attr("datetime"):
+            created_at = datetime.fromisoformat(time_el["datetime"]).astimezone(
+                timezone.utc
+            )
 
         url = f"https://career.habr.com{link}"
 
         return {
             "header": header,
-            "employer_name": employer_name,
+            "description": description,
             "url": url,
-            "source": "habr",
+            "source": "habr_career",
             "external_id": match.group(1),
+            "salary_from": salary_from,
+            "salary_to": salary_to,
+            "area": 0,
+            "experience": experience,
+            "created_at": created_at or datetime.now(timezone.utc),
+            "updated_at": created_at or datetime.now(timezone.utc),
+            "status": "NEW",
+            "city": city,
+            "work_format": work_format,
+            "employer_name": employer_name,
         }
 
     def _parse_page(self, html: str) -> list[dict]:
