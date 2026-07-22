@@ -33,4 +33,5 @@ def downgrade() -> None:
         "vacancies",
         "experience",
         type_=sa.INTEGER(),
+        postgresql_using="experience::integer",
     )

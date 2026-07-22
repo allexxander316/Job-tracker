@@ -53,6 +53,7 @@ def downgrade() -> None:
         existing_type=sa.String(),
         type_=sa.INTEGER(),
         existing_nullable=False,
+        postgresql_using="external_id::integer",
     )
     op.drop_column("vacancies", "source")
     # ### end Alembic commands ###
