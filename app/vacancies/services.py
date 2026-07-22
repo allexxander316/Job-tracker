@@ -8,7 +8,7 @@ from app.core.enums import Status as VacancyStatusEnum
 from app.core.logger import get_logger
 from app.vacancies.models import VacancyORM, VacancyChangeORM
 from app.vacancies.repository import VacancyRepository
-from app.parsers.hh_api import get_vacancies
+from app.parsers import PARSERS
 from app.vacancies.schemas import (
     VacancySchema,
     VacancyUpdateSchema,
@@ -135,12 +135,16 @@ class VacancySyncService:
         return diff
 
     async def sync_all(self) -> dict:
-        """Синхронизирует данные с hh.ru с данными в бд"""
+        """Синхронизирует данные с с выбранных сайтов с данными в бд"""
 
-        hh_vacancies = await get_vacancies()
-        logger.info("Syncing %s vacancies", len(hh_vacancies))
+        all_vacancies = []
+        for parser_fn in PARSERS:
+            batch = await parser_fn()
+            all_vacancies.extend(batch)
 
-        pairs = [(v["source"], v["external_id"]) for v in hh_vacancies]
+        logger.info("Syncing %s vacancies", len(all_vacancies))
+
+        pairs = [(v["source"], v["external_id"]) for v in all_vacancies]
         existing = await self.vacancy_repository.get_all_by_source_external_ids(pairs)
         existing_map = {(v.source, v.external_id): v for v in existing}
 
@@ -148,7 +152,7 @@ class VacancySyncService:
         updated = 0
         skipped = 0
 
-        for vacancy in hh_vacancies:
+        for vacancy in all_vacancies:
             key = (vacancy["source"], vacancy["external_id"])
             vacancy_from_db = existing_map.get(key)
 

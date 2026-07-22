@@ -5,7 +5,8 @@ from datetime import datetime, timezone
 import httpx
 from bs4 import BeautifulSoup
 
-from parsers.base import AbstractParser
+from app.config.settings import settings
+from app.parsers.base import AbstractParser
 
 VACANCY_ID_RE = re.compile(r"/vacancies/(\d+)")
 
@@ -13,10 +14,11 @@ VACANCY_ID_RE = re.compile(r"/vacancies/(\d+)")
 class HabrCareerParser(AbstractParser):
     BASE_URL = "https://career.habr.com/vacancies"
 
-    def __init__(self):
+    def __init__(self, search_text: str):
         self._client = httpx.AsyncClient(
             headers={"User-Agent": "Mozilla/5.0 (compatible; JobTracker/1.0)"}
         )
+        self.search_text = search_text
 
     async def __aenter__(self):
         return self
@@ -26,7 +28,7 @@ class HabrCareerParser(AbstractParser):
 
     async def _fetch_page(self, page: int) -> str:
         resp = await self._client.get(
-            self.BASE_URL, params={"page": page, "type": "all", "q": "python"}
+            self.BASE_URL, params={"page": page, "type": "all", "q": self.search_text}
         )
         resp.raise_for_status()
         return resp.text
@@ -141,3 +143,8 @@ class HabrCareerParser(AbstractParser):
             await asyncio.sleep(1)
 
         return all_vacancies
+
+
+async def get_vacancies() -> list[dict]:
+    async with HabrCareerParser(settings.search_text) as parser:
+        return await parser.get_all_vacancies()
