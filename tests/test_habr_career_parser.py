@@ -111,7 +111,7 @@ class TestParseCard:
         assert result["work_format"] == "Удалённо"
         assert result["experience"] == "Не указано"
         assert result["description"] == "Python, Django"
-        assert result["source"] == "habr_career"
+        assert result["source"] == "habr"
         assert result["status"] == "NEW"
         assert result["area"] == 0
         assert isinstance(result["created_at"], datetime)
