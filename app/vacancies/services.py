@@ -142,6 +142,12 @@ class VacancySyncService:
             batch = await parser_fn()
             all_vacancies.extend(batch)
 
+        unique = {}
+        for v in all_vacancies:
+            key = (v["source"], v["external_id"])
+            unique[key] = v
+        all_vacancies = list(unique.values())
+
         logger.info("Syncing %s vacancies", len(all_vacancies))
 
         pairs = [(v["source"], v["external_id"]) for v in all_vacancies]
