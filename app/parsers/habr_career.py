@@ -89,8 +89,8 @@ class HabrCareerParser(AbstractParser):
 
                 if "placemark" in href:
                     city = content
-                elif "удален" in content.lower():
-                    work_format = "Можно удаленно"
+                elif "удален" in content.lower().replace("ё", "е"):
+                    work_format = "Удалённо"
 
         description = ", ".join(
             a.get_text(strip=True) for a in card.select(".vacancy-card__skills a")
