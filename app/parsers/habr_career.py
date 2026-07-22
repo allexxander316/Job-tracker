@@ -7,8 +7,10 @@ from bs4 import BeautifulSoup
 
 from app.config.settings import settings
 from app.parsers.base import AbstractParser
+from app.core.logger import get_logger
 
 VACANCY_ID_RE = re.compile(r"/vacancies/(\d+)")
+logger = get_logger(__name__)
 
 
 class HabrCareerParser(AbstractParser):
@@ -127,6 +129,7 @@ class HabrCareerParser(AbstractParser):
         return [parsed for c in cards if (parsed := self._parse_card(c))]
 
     async def get_all_vacancies(self) -> list[dict]:
+        logger.info("Starting fetch: search_text='%s'", self.search_text)
         all_vacancies = []
         page = 1
 
@@ -134,6 +137,7 @@ class HabrCareerParser(AbstractParser):
             html = await self._fetch_page(page)
             vacancies = self._parse_page(html)
             all_vacancies.extend(vacancies)
+            logger.info("Page %s - %s vacancies so far", page, len(all_vacancies))
 
             soup = BeautifulSoup(html, "lxml")
             if not soup.select_one("a.next_page"):
@@ -142,6 +146,7 @@ class HabrCareerParser(AbstractParser):
             page += 1
             await asyncio.sleep(1)
 
+        logger.info("Fetch complete: %s total vacancies", len(all_vacancies))
         return all_vacancies
 
 

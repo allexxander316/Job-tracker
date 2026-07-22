@@ -138,14 +138,20 @@ class VacancySyncService:
         """Синхронизирует данные с с выбранных сайтов с данными в бд"""
 
         all_vacancies = []
-        for parser_fn in PARSERS:
+        for name, parser_fn in PARSERS:
+            logger.info("Starting parser: %s", name)
             batch = await parser_fn()
+            logger.info("Parser %s returned %s vacancies", name, len(batch))
             all_vacancies.extend(batch)
 
         unique = {}
         for v in all_vacancies:
             key = (v["source"], v["external_id"])
             unique[key] = v
+
+        deduped = len(all_vacancies) - len(unique)
+        if deduped:
+            logger.warning("Deduplicated %s vacancies", deduped)
         all_vacancies = list(unique.values())
 
         logger.info("Syncing %s vacancies", len(all_vacancies))
