@@ -121,7 +121,7 @@ class TestVacancySyncService:
             "salary_from": 100,
             "salary_to": 200,
             "area": 113,
-            "experience": 2,
+            "experience": "between1And3",
         }
         diff = VacancySyncService._build_diff(old, new)
         assert diff == {"header": {"old": "Python", "new": "Python Changed"}}
@@ -168,7 +168,7 @@ class TestVacancySyncService:
             "salary_from": 100,
             "salary_to": 200,
             "area": 113,
-            "experience": 2,
+            "experience": "between1And3",
             "city": "Moscow",
             "status": "VIEWED",
         }

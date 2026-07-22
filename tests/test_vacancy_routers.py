@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import FastAPI
@@ -139,17 +139,11 @@ class TestVacancyRouters:
 
         assert response.status_code == 422
 
-    def test_synchronize_vacancies(self, client, mock_sync_service):
-        mock_sync_service.sync_all.return_value = {
-            "created": 0,
-            "updated": 0,
-            "skipped": 0,
-        }
-
+    @patch("app.vacancies.routers.VacancySyncService.run_sync_in_background")
+    def test_synchronize_vacancies(self, mock_run_sync, client):
         response = client.post("/vacancies/sync_all")
-
-        assert response.status_code == 200
-        mock_sync_service.sync_all.assert_called_once()
+        assert response.status_code == 202
+        mock_run_sync.assert_called_once()
 
     def test_filter_validation_salary_min_greater_than_max(self):
         with pytest.raises(ValueError, match="salary_min > salary_max"):
