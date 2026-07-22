@@ -1,3 +1,4 @@
+import asyncio
 import re
 from datetime import datetime, timezone
 
@@ -25,7 +26,7 @@ class HabrCareerParser(AbstractParser):
 
     async def _fetch_page(self, page: int) -> str:
         resp = await self._client.get(
-            self.BASE_URL, params={"page": page, "type": "all"}
+            self.BASE_URL, params={"page": page, "type": "all", "q": "python"}
         )
         resp.raise_for_status()
         return resp.text
@@ -124,8 +125,19 @@ class HabrCareerParser(AbstractParser):
         return [parsed for c in cards if (parsed := self._parse_card(c))]
 
     async def get_all_vacancies(self) -> list[dict]:
-        html = await self._fetch_page(1)
-        vacancies = self._parse_page(html)
-        for v in vacancies[:20]:
-            print(v)
-        return vacancies
+        all_vacancies = []
+        page = 1
+
+        while True:
+            html = await self._fetch_page(page)
+            vacancies = self._parse_page(html)
+            all_vacancies.extend(vacancies)
+
+            soup = BeautifulSoup(html, "lxml")
+            if not soup.select_one("a.next_page"):
+                break
+
+            page += 1
+            await asyncio.sleep(1)
+
+        return all_vacancies
