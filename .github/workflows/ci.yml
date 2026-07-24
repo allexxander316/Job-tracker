@@ -14,7 +14,7 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.12"
-      - run: uvx ruff check .
+      - run: uvx ruff@0.16.0 check .
 
   test:
     runs-on: ubuntu-24.04
