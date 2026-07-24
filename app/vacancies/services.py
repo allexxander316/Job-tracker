@@ -1,23 +1,23 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi_pagination import Page, Params
 from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.database import async_session
 from app.core.enums import Status as VacancyStatusEnum
 from app.core.logger import get_logger
-from app.vacancies.models import VacancyORM, VacancyChangeORM
-from app.vacancies.repository import VacancyRepository
 from app.parsers import PARSERS
+from app.vacancies.models import VacancyChangeORM, VacancyORM
+from app.vacancies.repository import VacancyRepository
 from app.vacancies.schemas import (
-    VacancySchema,
-    VacancyUpdateSchema,
-    VacancyFilterParams,
-    VacancySortParams,
     VacancyChangeSchema,
+    VacancyFilterParams,
+    VacancySchema,
+    VacancySortParams,
+    VacancyUpdateSchema,
 )
 from app.vacancies.sync_status import sync_tracker
-from app.core.database import async_session
 
 logger = get_logger(__name__)
 
@@ -178,7 +178,7 @@ class VacancySyncService:
             if diff:
                 vacancy_to_db = {
                     **vacancy,
-                    "updated_at": datetime.now(timezone.utc),
+                    "updated_at": datetime.now(UTC),
                     "status": vacancy_from_db.status,
                 }
 
@@ -186,7 +186,7 @@ class VacancySyncService:
                     VacancyChangeORM(
                         vacancy_id=vacancy_from_db.id,
                         changes=diff,
-                        changed_at=datetime.now(timezone.utc),
+                        changed_at=datetime.now(UTC),
                         acknowledged=False,
                     )
                 )

@@ -2,8 +2,8 @@ from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
-from fastapi_pagination import add_pagination
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi_pagination import add_pagination
 
 from app.core.logger import setup_logging
 from app.scheduler.tasks import setup_scheduler

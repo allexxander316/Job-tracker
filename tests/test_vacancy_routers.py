@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -10,9 +10,9 @@ from app.core.enums import Status
 from app.vacancies.dependencies import get_vacancy_service, get_vacancy_sync_service
 from app.vacancies.routers import router as vacancy_router
 from app.vacancies.schemas import (
-    VacancySchema,
-    VacancyFilterParams,
     VacancyChangeSchema,
+    VacancyFilterParams,
+    VacancySchema,
 )
 from app.vacancies.services import VacancyNotFoundError
 
@@ -52,8 +52,8 @@ def make_vacancy_schema(**kwargs) -> VacancySchema:
         "city": "Москва",
         "employer_name": "Яндекс",
         "work_format": "Полный день",
-        "created_at": datetime(2026, 1, 1),
-        "updated_at": datetime(2026, 1, 1),
+        "created_at": datetime(2026, 1, 1, tzinfo=UTC),
+        "updated_at": datetime(2026, 1, 1, tzinfo=UTC),
         "status": Status.NEW,
         "has_unacknowledged_changes": False,
     }
@@ -68,7 +68,7 @@ def make_vacancy_changes_schema(**kwargs) -> VacancyChangeSchema:
         "id": 1,
         "vacancy_id": 1,
         "changes": {"header": {"old": "Python", "new": "Senior"}},
-        "changed_at": datetime(2026, 1, 1),
+        "changed_at": datetime(2026, 1, 1, tzinfo=UTC),
         "acknowledged": False,
     }
     data.update(**kwargs)

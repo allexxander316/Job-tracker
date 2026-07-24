@@ -5,7 +5,6 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from alembic import context
-
 from app.config.settings import settings
 from app.core.database import Base
 from app.vacancies.models import VacancyORM  # noqa: F401

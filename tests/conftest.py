@@ -1,9 +1,10 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
+
 from app.core.database import Base
 
 
@@ -59,8 +60,8 @@ def make_vacancy_data(source: str = "hh", external_id: str = "1", **kwargs) -> d
         "url": f"https://hh.ru/vacancy/{external_id}",
         "source": source,
         "external_id": external_id,
-        "created_at": datetime(2026, 1, 1, tzinfo=timezone.utc),
-        "updated_at": datetime(2026, 1, 1, tzinfo=timezone.utc),
+        "created_at": datetime(2026, 1, 1, tzinfo=UTC),
+        "updated_at": datetime(2026, 1, 1, tzinfo=UTC),
         "status": "NEW",
         "salary_from": 100_000,
         "salary_to": 200_000,

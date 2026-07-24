@@ -3,9 +3,9 @@ from unittest.mock import patch
 import pytest
 from sqlalchemy import select
 
+from app.vacancies.models import VacancyChangeORM, VacancyORM
 from app.vacancies.repository import VacancyRepository
 from app.vacancies.services import VacancySyncService
-from app.vacancies.models import VacancyORM, VacancyChangeORM
 from tests.conftest import make_vacancy_data
 
 

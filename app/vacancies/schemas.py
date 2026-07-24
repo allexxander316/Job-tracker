@@ -1,9 +1,9 @@
-from datetime import datetime, date
+from datetime import date, datetime
 
 from fastapi import Query
 from pydantic import BaseModel, ConfigDict, model_validator
 
-from app.core.enums import Status, SortField, SortOrder
+from app.core.enums import SortField, SortOrder, Status
 
 
 class VacancyUpdateSchema(BaseModel):

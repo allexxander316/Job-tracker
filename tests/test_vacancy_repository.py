@@ -1,8 +1,8 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
-from app.core.enums import Status, SortField, SortOrder
+from app.core.enums import SortField, SortOrder, Status
 from app.vacancies.repository import VacancyRepository
 from app.vacancies.schemas import VacancyFilterParams, VacancySortParams
 from tests.conftest import make_vacancy_data
@@ -64,7 +64,7 @@ async def test_update_vacancy(session, repo):
 
     repo.update_vacancy(
         vacancy,
-        {"header": "Senior Python Developer", "updated_at": datetime.now(timezone.utc)},
+        {"header": "Senior Python Developer", "updated_at": datetime.now(UTC)},
     )
     await session.commit()
 
@@ -249,8 +249,9 @@ async def test_delete_vacancy(session, repo):
 
 
 async def test_get_changes_by_vacancy(session, repo):
+    from datetime import datetime
+
     from app.vacancies.models import VacancyChangeORM
-    from datetime import datetime, timezone
 
     vacancy = repo.add_vacancy(make_vacancy_data())
     await session.commit()
@@ -258,7 +259,7 @@ async def test_get_changes_by_vacancy(session, repo):
     change = VacancyChangeORM(
         vacancy_id=vacancy.id,
         changes={"header": {"old": "Python", "new": "Senior Python"}},
-        changed_at=datetime.now(timezone.utc),
+        changed_at=datetime.now(UTC),
         acknowledged=False,
     )
     session.add(change)
@@ -270,8 +271,9 @@ async def test_get_changes_by_vacancy(session, repo):
 
 
 async def test_get_unacknowledged_ids(session, repo):
+    from datetime import datetime
+
     from app.vacancies.models import VacancyChangeORM
-    from datetime import datetime, timezone
 
     v1 = repo.add_vacancy(make_vacancy_data(external_id="1"))
     v2 = repo.add_vacancy(make_vacancy_data(external_id="2"))
@@ -281,7 +283,7 @@ async def test_get_unacknowledged_ids(session, repo):
         VacancyChangeORM(
             vacancy_id=v1.id,
             changes={},
-            changed_at=datetime.now(timezone.utc),
+            changed_at=datetime.now(UTC),
             acknowledged=True,
         )
     )
@@ -289,7 +291,7 @@ async def test_get_unacknowledged_ids(session, repo):
         VacancyChangeORM(
             vacancy_id=v2.id,
             changes={},
-            changed_at=datetime.now(timezone.utc),
+            changed_at=datetime.now(UTC),
             acknowledged=False,
         )
     )
@@ -300,8 +302,9 @@ async def test_get_unacknowledged_ids(session, repo):
 
 
 async def test_acknowledge_changes(session, repo):
+    from datetime import datetime
+
     from app.vacancies.models import VacancyChangeORM
-    from datetime import datetime, timezone
 
     vacancy = repo.add_vacancy(make_vacancy_data())
     await session.commit()
@@ -309,7 +312,7 @@ async def test_acknowledge_changes(session, repo):
     change = VacancyChangeORM(
         vacancy_id=vacancy.id,
         changes={"header": {"old": "Python", "new": "Senior"}},
-        changed_at=datetime.now(timezone.utc),
+        changed_at=datetime.now(UTC),
         acknowledged=False,
     )
     session.add(change)

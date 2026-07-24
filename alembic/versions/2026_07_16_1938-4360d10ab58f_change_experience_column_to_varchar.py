@@ -6,17 +6,16 @@ Create Date: 2026-07-16 19:38:12.026075
 
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision: str = "4360d10ab58f"  # pragma: allowlist secret
-down_revision: Union[str, Sequence[str], None] = (
-    "1bea1a388141"  # pragma: allowlist secret
-)
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | Sequence[str] | None = "1bea1a388141"  # pragma: allowlist secret
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:

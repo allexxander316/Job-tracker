@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 
 class SyncStatusTracker:
@@ -11,21 +11,21 @@ class SyncStatusTracker:
     def start(self) -> None:
         self._status = {
             "status": "running",
-            "started_at": datetime.now(timezone.utc).isoformat(),
+            "started_at": datetime.now(UTC).isoformat(),
         }
 
     def complete(self, report: dict) -> None:
         self._status = {
             **report,
             "status": "completed",
-            "finished_at": datetime.now(timezone.utc).isoformat(),
+            "finished_at": datetime.now(UTC).isoformat(),
         }
 
     def fail(self, error: str) -> None:
         self._status = {
             "status": "failed",
             "error": error,
-            "finished_at": datetime.now(timezone.utc).isoformat(),
+            "finished_at": datetime.now(UTC).isoformat(),
         }
 
     def get(self) -> dict | None:

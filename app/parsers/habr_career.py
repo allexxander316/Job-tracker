@@ -1,13 +1,13 @@
 import asyncio
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 from bs4 import BeautifulSoup
 
 from app.config.settings import settings
-from app.parsers.base import AbstractParser
 from app.core.logger import get_logger
+from app.parsers.base import AbstractParser
 
 VACANCY_ID_RE = re.compile(r"/vacancies/(\d+)")
 logger = get_logger(__name__)
@@ -99,9 +99,7 @@ class HabrCareerParser(AbstractParser):
         time_el = card.select_one("time")
         created_at = None
         if time_el and time_el.has_attr("datetime"):
-            created_at = datetime.fromisoformat(time_el["datetime"]).astimezone(
-                timezone.utc
-            )
+            created_at = datetime.fromisoformat(time_el["datetime"]).astimezone(UTC)
 
         url = f"https://career.habr.com{link}"
 
@@ -115,8 +113,8 @@ class HabrCareerParser(AbstractParser):
             "salary_to": salary_to,
             "area": 0,
             "experience": experience,
-            "created_at": created_at or datetime.now(timezone.utc),
-            "updated_at": created_at or datetime.now(timezone.utc),
+            "created_at": created_at or datetime.now(UTC),
+            "updated_at": created_at or datetime.now(UTC),
             "status": "NEW",
             "city": city,
             "work_format": work_format,

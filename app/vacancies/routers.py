@@ -1,15 +1,15 @@
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, status, Depends, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi_pagination import Page, Params
 
 from app.core.enums import Status as VacancyStatusEnum
 from app.vacancies.dependencies import VacancyServiceDep
 from app.vacancies.schemas import (
-    VacancySchema,
-    VacancyFilterParams,
-    VacancySortParams,
     VacancyChangeSchema,
+    VacancyFilterParams,
+    VacancySchema,
+    VacancySortParams,
 )
 from app.vacancies.services import VacancyNotFoundError, VacancySyncService
 from app.vacancies.sync_status import sync_tracker

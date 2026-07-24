@@ -1,9 +1,11 @@
+from datetime import UTC
+
 import pytest
 import pytest_asyncio
 
 from app.core.enums import Status
 from app.vacancies.schemas import VacancyUpdateSchema
-from app.vacancies.services import VacancyService, VacancyNotFoundError
+from app.vacancies.services import VacancyNotFoundError, VacancyService
 from tests.conftest import make_vacancy_data
 
 pytestmark = pytest.mark.asyncio
@@ -68,14 +70,15 @@ class TestVacancyService:
             await service.change_status(999, Status.VIEWED)
 
     async def test_get_changes(self, session, service):
+        from datetime import datetime
+
         from app.vacancies.models import VacancyChangeORM
-        from datetime import datetime, timezone
 
         created = await service.insert_vacancy(make_vacancy_data())
         change = VacancyChangeORM(
             vacancy_id=created.id,
             changes={"header": {"old": "Python", "new": "Senior"}},
-            changed_at=datetime.now(timezone.utc),
+            changed_at=datetime.now(UTC),
             acknowledged=False,
         )
         session.add(change)
@@ -90,14 +93,15 @@ class TestVacancyService:
             await service.get_changes(999)
 
     async def test_acknowledge_changes(self, session, service):
+        from datetime import datetime
+
         from app.vacancies.models import VacancyChangeORM
-        from datetime import datetime, timezone
 
         created = await service.insert_vacancy(make_vacancy_data())
         change = VacancyChangeORM(
             vacancy_id=created.id,
             changes={"header": {"old": "Python", "new": "Senior"}},
-            changed_at=datetime.now(timezone.utc),
+            changed_at=datetime.now(UTC),
             acknowledged=False,
         )
         session.add(change)

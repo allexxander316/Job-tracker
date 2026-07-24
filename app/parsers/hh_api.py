@@ -1,13 +1,13 @@
 import asyncio
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Self
 
 import httpx
 
 from app.config.settings import settings
 from app.core.logger import get_logger
 from app.parsers.base import AbstractParser
-
 
 logger = get_logger(__name__)
 
@@ -16,7 +16,7 @@ def _parse_hh_dt(dt_str: str) -> datetime:
     """HH API возвращает '2026-07-16T11:38:03+0300' — без двоеточия в offset"""
     if dt_str[-3] != ":":
         dt_str = dt_str[:-5] + dt_str[-5:-2] + ":" + dt_str[-2:]
-    return datetime.fromisoformat(dt_str).astimezone(timezone.utc)
+    return datetime.fromisoformat(dt_str).astimezone(UTC)
 
 
 class HHApiParser(AbstractParser):
@@ -33,7 +33,7 @@ class HHApiParser(AbstractParser):
         self.professional_role = professional_role
         self.text = text
 
-    async def __aenter__(self) -> "HHApiParser":
+    async def __aenter__(self) -> Self:
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
